@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gotilo Container | Fleet Monitor{% endblock %}</title>
+    
+    <!-- Google Fonts: Inter for clean typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --bg-color: #ffffff;       /* Pure White Background */
+            --card-bg: #f8fafc;        /* Very Light Slate Card Background */
+            --border-color: #cbd5e1;   /* Slate-300 light borders */
+            --border-hover: #dc2626;   /* Red Accent border on hover */
+            
+            --text-primary: #0f172a;   /* Slate-900 (almost black) */
+            --text-secondary: #334155; /* Slate-700 secondary text */
+            --text-muted: #64748b;     /* Slate-500 muted text */
+            
+            --primary: #dc2626;        /* Accent Red */
+            --primary-hover: #b91c1c;  /* Hover Red */
+            --primary-glow: rgba(220, 38, 38, 0.1);
+            
+            --accent-orange: #d97706;  /* Orange */
+            --accent-purple: #7c3aed;  /* Purple */
+            --accent-cyan: #0891b2;    /* Cyan */
+            --accent-green: #059669;   /* Green status */
+            --accent-red: #dc2626;     /* Red status */
+            
+            --reachstacker-color: #dc2626; /* Red */
+            --forklift-color: #0f172a;     /* Black */
+            --sideshifter-color: #475569;  /* Gray */
+            
+            --font-main: 'Inter', -apple-system, sans-serif;
+            --transition: all 0.2s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Container styling */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Navbar (Light Background) */
+        header {
+            border-bottom: 2px solid var(--primary);
+            background-color: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 4rem;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: -0.025em;
+        }
+
+        .brand-logo-icon {
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+        }
+
+        .brand span {
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* Navbar Right Actions Group */
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Site Selector Dropdown in Navbar */
+        .nav-selector-container {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background-color: rgba(15, 23, 42, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .nav-selector-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: none;
+            margin-right: 0.25rem;
+        }
+
+        @media (min-width: 768px) {
+            .nav-selector-label {
+                display: block;
+            }
+        }
+
+        .nav-select {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 0.35rem 1.75rem 0.35rem 0.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.4rem center;
+            background-size: 0.85rem;
+            min-width: 140px;
+        }
+
+        .nav-select:hover {
+            border-color: var(--border-hover);
+        }
+
+        .nav-select:focus {
+            border-color: var(--primary);
+        }
+
+        .nav-add-btn {
+            background-color: var(--primary);
+            border: none;
+            color: #ffffff;
+            border-radius: 4px;
+            width: 1.85rem;
+            height: 1.85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .nav-add-btn:hover {
+            background-color: var(--primary-hover);
+            transform: scale(1.05);
+        }
+
+        /* Main Content - spacing/padding configured between header/footer and body */
+        main.container {
+            flex: 1;
+            padding-top: 2.5rem;
+            padding-bottom: 2.5rem;
+        }
+
+        /* Sleek Card Panel */
+        .glass-panel {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .glass-panel:hover {
+            border-color: var(--border-hover);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* Button design */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            border: 1px solid transparent;
+            font-family: var(--font-main);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(203, 213, 225, 0.2);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .btn-danger {
+            background-color: rgba(220, 38, 38, 0.06);
+            border: 1px solid rgba(220, 38, 38, 0.15);
+            color: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background-color: rgba(220, 38, 38, 0.15);
+            border-color: var(--accent-red);
+            color: #ffffff;
+        }
+
+        /* Notification/Alert messages (Floating Top-Right Toast Notifications) */
+        .alert-container {
+            position: fixed;
+            top: 5rem;
+            right: 1.5rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 320px;
+            width: calc(100% - 3rem);
+            pointer-events: none; /* Let clicks pass through empty spaces of container */
+        }
+
+        .alert {
+            pointer-events: auto; /* Allow clicking toast details/close buttons */
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+            animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .alert-success {
+            background-color: rgba(5, 150, 105, 0.08);
+            border: 1px solid rgba(5, 150, 105, 0.2);
+            color: #065f46;
+        }
+
+        .alert-error {
+            background-color: rgba(220, 38, 38, 0.08);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+            color: #991b1b;
+        }
+
+        .alert-close {
+            background: none;
+            border: none;
+            color: currentColor;
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 1;
+            padding-left: 0.75rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .alert-close:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Footer (Light Background) */
+        footer {
+            border-top: 2px solid var(--primary);
+            padding: 1.25rem 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            background-color: #ffffff;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from { transform: translateY(-5px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Utilities */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .badge-cyan { background-color: rgba(8, 145, 178, 0.08); color: #0891b2; border: 1px solid rgba(8, 145, 178, 0.15); }
+        .badge-orange { background-color: rgba(217, 119, 6, 0.08); color: #d97706; border: 1px solid rgba(217, 119, 6, 0.15); }
+        .badge-purple { background-color: rgba(124, 58, 237, 0.08); color: #7c3aed; border: 1px solid rgba(124, 58, 237, 0.15); }
+        .badge-green { background-color: rgba(5, 150, 105, 0.08); color: #059669; border: 1px solid rgba(5, 150, 105, 0.15); }
+        .badge-red { background-color: rgba(220, 38, 38, 0.08); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.15); }
+
+        .text-center { text-align: center; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-1 { gap: 0.25rem; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+        .gap-4 { gap: 1rem; }
+        .flex-wrap { flex-wrap: wrap; }
+        
+        /* Forms styling */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.35rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* SVG icons for vehicles styling - forced aspect-ratio and scaling */
+        .vehicle-svg {
+            width: 2.5rem;
+            height: 2.5rem;
+            aspect-ratio: 1 / 1;
+            display: block;
+        }
+        
+        .vehicle-svg.reachstacker { fill: var(--reachstacker-color); }
+        .vehicle-svg.forklift { fill: var(--forklift-color); }
+        .vehicle-svg.side_shifter { fill: var(--sideshifter-color); }
+
+        .hidden-svg-defs {
+            position: absolute;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        /* Lucide icon wrapper */
+        .l-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.15rem;
+            height: 1.15rem;
+            stroke-width: 2;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Reusable SVG Definitions for Vehicles -->
+    <svg class="hidden-svg-defs">
+        <defs>
+            <!-- REACHSTACKER ICON -->
+            <g id="icon-reachstacker">
+                <!-- Spreader Container -->
+                <rect x="6" y="44" width="28" height="12" rx="1" stroke="currentColor" stroke-width="2" fill="none" opacity="0.8"/>
+                <line x1="6" y1="50" x2="34" y2="50" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2,2"/>
+                <!-- Wheels -->
+                <circle cx="42" cy="52" r="6" fill="currentColor" />
+                <circle cx="42" cy="52" r="2" fill="#0f172a" />
+                <circle cx="56" cy="52" r="5" fill="currentColor" />
+                <circle cx="56" cy="52" r="1.5" fill="#0f172a" />
+                <!-- Chassis & Cabin -->
+                <path d="M 36 42 L 60 42 L 58 48 L 36 48 Z" fill="currentColor" opacity="0.9"/>
+                <path d="M 46 36 L 52 36 L 54 42 L 46 42 Z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <!-- Telescopic boom -->
+                <path d="M 55 42 L 20 22 L 22 18 L 57 38 Z" fill="currentColor"/>
+                <!-- Extension Spreader Connection -->
+                <path d="M 20 20 L 20 38 L 16 38 L 16 44 L 24 44 L 24 38 L 20 38" stroke="currentColor" stroke-width="2" fill="none"/>
+            </g>
+            
+            <!-- FORKLIFT ICON -->
+            <g id="icon-forklift">
+                <!-- Back wheel -->
+                <circle cx="16" cy="50" r="6" fill="currentColor" />
+                <circle cx="16" cy="50" r="2" fill="#0f172a" />
+                <!-- Front wheel -->
+                <circle cx="40" cy="50" r="6" fill="currentColor" />
+                <circle cx="40" cy="50" r="2" fill="#0f172a" />
+                <!-- Chassis and Driver Cage -->
+                <path d="M 8 46 L 24 46 L 24 24 L 12 24 L 8 38 Z" stroke="currentColor" stroke-width="2.5" fill="none"/>
+                <rect x="8" y="38" width="36" height="8" rx="2" fill="currentColor"/>
+                <!-- Driver seat / details -->
+                <path d="M 16 38 L 16 32 L 20 32" stroke="currentColor" stroke-width="2" fill="none"/>
+                <!-- Mast -->
+                <rect x="44" y="16" width="3" height="32" fill="currentColor"/>
+                <!-- Fork carriage & load -->
+                <path d="M 47 38 L 58 38 L 58 42 L 47 42" stroke="currentColor" stroke-width="2.5" fill="none"/>
+                <!-- Pallet/Cargo box -->
+                <rect x="48" y="24" width="10" height="13" rx="1" fill="currentColor" opacity="0.6" stroke="currentColor" stroke-width="1"/>
+            </g>
+            
+            <!-- SIDE SHIFTER / CONTAINER SIDE LOADER ICON -->
+            <g id="icon-side_shifter">
+                <!-- Main Chassis of Side Loader -->
+                <rect x="10" y="42" width="44" height="7" rx="1.5" fill="currentColor"/>
+                <!-- Wheels -->
+                <circle cx="18" cy="51" r="5.5" fill="currentColor" />
+                <circle cx="18" cy="51" r="2" fill="#0f172a" />
+                <circle cx="46" cy="51" r="5.5" fill="currentColor" />
+                <circle cx="46" cy="51" r="2" fill="#0f172a" />
+                <!-- Left and Right Lifting Crane arms (Side Lifters) -->
+                <path d="M 14 42 L 14 24 L 20 18 L 18 42" fill="currentColor" opacity="0.8"/>
+                <path d="M 50 42 L 50 24 L 44 18 L 46 42" fill="currentColor" opacity="0.8"/>
+                <!-- Container in the center shifting/hanging -->
+                <rect x="18" y="24" width="28" height="15" rx="1" stroke="currentColor" stroke-width="2" fill="none" />
+                <!-- Arrow representations of Shifting -->
+                <path d="M 24 14 L 40 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M 26 11 L 23 14 L 26 17" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/>
+                <path d="M 38 11 L 41 14 L 38 17" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/>
+            </g>
+        </defs>
+    </svg>
+
+    <header>
+        <div class="container navbar">
+            <a href="{% url 'dashboard' %}" class="brand" title="Dashboard">
+                <span class="brand-logo-icon">
+                    <i data-lucide="container" style="width: 1.4rem; height: 1.4rem;"></i>
+                </span>
+                GOTILO&nbsp;<span>FLEET</span>
+            </a>
+            
+            <!-- Navbar Actions on the Right: Site Selection Dropdown & Add Site button only -->
+            <div class="navbar-right">
+                <div class="nav-selector-container">
+                    <span class="nav-selector-label">Site Selection:</span>
+                    <select class="nav-select" onchange="if(this.value) { window.location.href='/site/' + this.value + '/'; } else { window.location.href='/'; }">
+                        <option value="">-- All Sites --</option>
+                        {% for s in all_sites %}
+                            <option value="{{ s.id }}" {% if site.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <!-- Plus sign linking to dashboard with add_site parameter -->
+                    <a href="/?add_site=1" class="nav-add-btn" id="nav-add-site-link" title="Add New Site">
+                        <i data-lucide="plus" style="width: 1rem; height: 1rem;"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Messages Floating Wrapper -->
+    {% if messages %}
+    <div class="alert-container">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}error{% else %}success{% endif %}" id="alert-{{ forloop.counter }}">
+            <span class="flex items-center gap-2">
+                <i data-lucide="{% if message.tags == 'error' %}alert-circle{% else %}check-circle{% endif %}" style="width: 1.15rem; height: 1.15rem;"></i>
+                {{ message }}
+            </span>
+            <button class="alert-close" onclick="document.getElementById('alert-{{ forloop.counter }}').remove()">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Gotilo-Container Terminal Management. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Check if on Dashboard; if so, hijack the Navbar Plus button to trigger modal directly
+        const navAddSiteLink = document.getElementById('nav-add-site-link');
+        const dashboardModalOverlay = document.getElementById('site-modal-overlay');
+        
+        if (navAddSiteLink && dashboardModalOverlay) {
+            navAddSiteLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                dashboardModalOverlay.classList.add('active');
+            });
+        }
+
+        // Auto-dismiss success and error toasts after 4 seconds
+        document.addEventListener('DOMContentLoaded', () => {
+            const toasts = document.querySelectorAll('.alert');
+            toasts.forEach(toast => {
+                setTimeout(() => {
+                    toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(50px)';
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 400);
+                }, 4000);
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

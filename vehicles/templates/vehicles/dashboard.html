@@ -1,0 +1,430 @@
+{% extends 'vehicles/base.html' %}
+{% load vehicle_tags %}
+
+{% block title %}Dashboard | Gotilo Container Fleet{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .dashboard-title h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.025em;
+    }
+
+    .dashboard-title p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-top: 0.15rem;
+    }
+
+    /* Clean Stats Bar */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .stat-icon {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--primary);
+        border-radius: 6px;
+        width: 3rem;
+        height: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stat-icon.orange { background-color: rgba(249, 115, 22, 0.1); color: var(--accent-orange); }
+    .stat-icon.purple { background-color: rgba(139, 92, 246, 0.1); color: var(--accent-purple); }
+    .stat-icon.cyan { background-color: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); }
+    .stat-icon.green { background-color: rgba(16, 185, 129, 0.1); color: var(--accent-green); }
+
+    .stat-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-title {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.2;
+        margin-top: 0.15rem;
+    }
+
+    /* Central Site Selector for Main Page */
+    .selector-block {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        max-width: 600px;
+        margin: 0 auto 3rem auto;
+    }
+
+    .selector-block h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .selector-block p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.25rem;
+    }
+
+    .selector-dropdown-wrapper {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+
+    /* Sites list list-group style instead of cards */
+    .sites-list-container {
+        margin-top: 2rem;
+    }
+
+    .sites-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .sites-table th {
+        background-color: rgba(30, 41, 59, 0.5);
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        text-align: left;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .sites-table td {
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 1.25rem;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        vertical-align: middle;
+    }
+
+    .sites-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .sites-table tr:hover td {
+        background-color: rgba(51, 65, 85, 0.15);
+    }
+
+    .site-action-cell {
+        text-align: right !important;
+    }
+
+    /* Modal Form dialog */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        width: 100%;
+        max-width: 450px;
+        padding: 1.75rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        transform: translateY(-10px);
+        transition: transform 0.2s ease;
+    }
+
+    .modal-overlay.active .modal {
+        transform: translateY(0);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.25rem;
+        cursor: pointer;
+    }
+
+    .modal-close:hover {
+        color: var(--text-primary);
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1.25rem;
+        border-top: 1px solid var(--border-color);
+        padding-top: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="dashboard-title">
+        <h1>Fleet Operations Dashboard</h1>
+        <p>Container yard vehicle telemetry & video monitoring nodes</p>
+    </div>
+</div>
+
+<!-- Stats Strip -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <i data-lucide="map-pin" style="width: 1.5rem; height: 1.5rem;"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-title">Locations</span>
+            <span class="stat-value">{{ total_sites }}</span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i data-lucide="truck" style="width: 1.5rem; height: 1.5rem;"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-title">Total Fleet</span>
+            <span class="stat-value">{{ total_vehicles }}</span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon cyan">
+            <i data-lucide="camera" style="width: 1.5rem; height: 1.5rem;"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-title">Cameras Configured</span>
+            <span class="stat-value">{{ total_cameras }}</span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <i data-lucide="cog" style="width: 1.5rem; height: 1.5rem;"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-title">Forklifts</span>
+            <span class="stat-value">{{ forklifts }}</span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon cyan">
+            <!-- Reuse reachstacker concept, or display scale -->
+            <i data-lucide="container" style="width: 1.5rem; height: 1.5rem;"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-title">Reachstackers</span>
+            <span class="stat-value">{{ reachstackers }}</span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon purple">
+            <i data-lucide="chevrons-left-right" style="width: 1.5rem; height: 1.5rem;"></i>
+        </div>
+        <div class="stat-info">
+            <span class="stat-title">Side Shifters</span>
+            <span class="stat-value">{{ side_shifters }}</span>
+        </div>
+    </div>
+</div>
+
+
+<!-- Sites List Section -->
+<div class="sites-list-container">
+    <h2 class="section-title" style="border-left: 3px solid var(--primary); padding-left: 0.5rem; font-size: 1.1rem; font-weight: 600;">
+        Registered Terminal Locations
+    </h2>
+    
+    {% if sites %}
+        <div style="overflow-x: auto;">
+            <table class="sites-table">
+                <thead>
+                    <tr>
+                        <th style="width: 35%;">Terminal Name</th>
+                        <th style="width: 30%;">Geographic Location</th>
+                        <th style="width: 20%; text-align: center;">Vehicles Connected</th>
+                        <th style="width: 15%; text-align: right;" class="site-action-cell">Monitor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for site in sites %}
+                        <tr>
+                            <td style="font-weight: 600;">
+                                <a href="{% url 'site_detail' site.id %}" style="color: var(--text-primary); text-decoration: none;">
+                                    {{ site.name }}
+                                </a>
+                            </td>
+                            <td style="color: var(--text-secondary);">
+                                <span class="flex items-center gap-2">
+                                    <i data-lucide="map-pin" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
+                                    {{ site.location|default:"No location set" }}
+                                </span>
+                            </td>
+                            <td style="text-align: center;">
+                                <span class="badge badge-cyan">{{ site.vehicles.count }} Machines</span>
+                            </td>
+                            <td class="site-action-cell">
+                                <a href="{% url 'site_detail' site.id %}" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                                    View
+                                    <i data-lucide="arrow-right" style="width: 12px; height: 12px;"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="glass-panel text-center" style="padding: 3rem 1.5rem;">
+            <i data-lucide="map" style="width: 2.5rem; height: 2.5rem; color: var(--text-muted); margin-bottom: 0.75rem;"></i>
+            <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem;">No sites configured</h3>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">Register your first container yard location to get started.</p>
+            <button class="btn btn-primary" onclick="document.getElementById('site-modal-overlay').classList.add('active')">Register First Site</button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal Form for Adding Site -->
+<div class="modal-overlay" id="site-modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Register Terminal Site</h2>
+            <button class="modal-close" id="close-site-modal">&times;</button>
+        </div>
+        <form action="{% url 'add_site' %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="site-name">Site Name *</label>
+                <input type="text" id="site-name" name="name" class="form-control" placeholder="e.g. Yard 5 South" required>
+            </div>
+            <div class="form-group">
+                <label for="site-location">Location / City</label>
+                <input type="text" id="site-location" name="location" class="form-control" placeholder="e.g. Rotterdam Port, NL">
+            </div>
+            <div class="form-group">
+                <label for="site-desc">Description</label>
+                <textarea id="site-desc" name="description" class="form-control" placeholder="Add descriptive notes..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancel-site-modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Site</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const modalOverlay = document.getElementById('site-modal-overlay');
+    const openBtn = document.getElementById('open-site-modal');
+    const closeBtn = document.getElementById('close-site-modal');
+    const cancelBtn = document.getElementById('cancel-site-modal');
+
+    if (openBtn) {
+        openBtn.addEventListener('click', () => {
+            modalOverlay.classList.add('active');
+        });
+    }
+
+    [closeBtn, cancelBtn].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', () => {
+                modalOverlay.classList.remove('active');
+            });
+        }
+    });
+
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+            modalOverlay.classList.remove('active');
+        }
+    });
+
+    // Automatically trigger modal if user landed with the ?add_site=1 parameter
+    if (window.location.search.includes('add_site=1')) {
+        modalOverlay.classList.add('active');
+        // Clean URL to avoid reopening on reload
+        history.replaceState(null, '', window.location.pathname);
+    }
+</script>
+{% endblock %}
