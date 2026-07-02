@@ -1,0 +1,431 @@
+{% extends 'vehicles/base.html' %}
+
+{% block title %}User Management | Gotilo Container Fleet{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-header-block {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-top: 1rem;
+    }
+
+    .user-table th {
+        background-color: rgba(30, 41, 59, 0.5);
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        text-align: left;
+        padding: 0.75rem 1rem;
+    }
+
+    .user-table td {
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.85rem 1rem;
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        vertical-align: middle;
+    }
+
+    .user-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .user-table tr:hover td {
+        background-color: rgba(51, 65, 85, 0.08);
+    }
+
+    .checklist-box {
+        max-height: 150px;
+        overflow-y: auto;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.5rem;
+        background-color: #ffffff;
+    }
+
+    .checklist-item {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    /* Modal Form dialog */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        width: 100%;
+        max-width: 450px;
+        padding: 1.75rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        transform: translateY(-10px);
+        transition: transform 0.2s ease;
+    }
+
+    .modal-overlay.active .modal {
+        transform: translateY(0);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.25rem;
+        cursor: pointer;
+    }
+
+    .modal-close:hover {
+        color: var(--text-primary);
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1.25rem;
+        border-top: 1px solid var(--border-color);
+        padding-top: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="user-header-block">
+    <div>
+        <h1 style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.025em;">
+            User Management
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+            Configure accounts, manage system permissions, and allocate terminal sites to field operators.
+        </p>
+    </div>
+    <button class="btn btn-primary" id="open-add-user-btn">
+        <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>
+        Register New User
+    </button>
+</div>
+
+<!-- Main Registered Accounts Records list (Vertical full width) -->
+<div>
+    <h2 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; border-left: 3px solid var(--primary); padding-left: 0.5rem;">
+        Registered Accounts & Permissions ({{ users.count }})
+    </h2>
+
+    <div style="overflow-x: auto;">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">User Details</th>
+                    <th style="width: 15%;">System Role</th>
+                    <th style="width: 15%;">Account Status</th>
+                    <th style="width: 25%;">Allocated Locations</th>
+                    <th style="width: 20%; text-align: right;">Operations</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600; color: var(--text-primary);">{{ u.username }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ u.email|default:"No email registered" }}</div>
+                        </td>
+                        <td>
+                            <span class="badge {% if u.profile.role == 'super_admin' %}badge-purple{% elif u.profile.role == 'mid_level' %}badge-orange{% else %}badge-cyan{% endif %}" style="font-size: 0.65rem;">
+                                {{ u.profile.get_role_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if u.profile.is_locked %}
+                                <span class="badge badge-red" style="font-size: 0.65rem; text-transform: none;">Locked ({{ u.profile.failed_login_attempts }} fails)</span>
+                            {% else %}
+                                <span class="badge badge-green" style="font-size: 0.65rem; text-transform: none;">Active</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.profile.role == 'super_admin' or u.profile.role == 'mid_level' %}
+                                <span style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">All Terminals (Global Access)</span>
+                            {% else %}
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                                    {% for s in u.profile.assigned_sites.all %}
+                                        <span class="badge badge-green" style="font-size: 0.6rem; text-transform: none;">{{ s.name }}</span>
+                                    {% empty %}
+                                        <span style="font-size: 0.75rem; color: var(--accent-red); font-style: italic;">No locations allocated</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <!-- Edit Button -->
+                            <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" 
+                                onclick="openEditUserModal('{{ u.id }}', '{{ u.username }}', '{{ u.email }}', '{{ u.profile.role }}', '[{% for s in u.profile.assigned_sites.all %}{{ s.id }}{% if not forloop.last %},{% endif %}{% endfor %}]')">
+                                <i data-lucide="edit" style="width: 12px; height: 12px;"></i>
+                                Edit
+                            </button>
+                            
+                            <!-- Delete Button -->
+                            {% if u.username == 'weboccultadmin' or u.id == request.user.id %}
+                                <span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic; margin-left: 0.25rem;">Protected</span>
+                            {% else %}
+                                <form action="{% url 'delete_user' u.id %}" method="post" onsubmit="return confirm('Are you sure you want to delete user \'{{ u.username }}\'?');" style="display: inline; margin: 0;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                        <i data-lucide="user-x" style="width: 12px; height: 12px;"></i>
+                                        Delete
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal 1: Register New User -->
+<div class="modal-overlay" id="add-user-modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Register New User</h2>
+            <button class="modal-close" id="close-add-user-modal">&times;</button>
+        </div>
+        <form method="post" action="{% url 'add_user' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="add-username">Username *</label>
+                <input type="text" name="username" id="add-username" class="form-control" required placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label for="add-email">Email Address</label>
+                <input type="email" name="email" id="add-email" class="form-control" placeholder="user@example.com">
+            </div>
+            <div class="form-group">
+                <label for="add-password">Password *</label>
+                <input type="password" name="password" id="add-password" class="form-control" required placeholder="Enter password">
+            </div>
+            <div class="form-group">
+                <label for="add-role">System Role *</label>
+                <select name="role" id="add-role" class="form-control" required onchange="toggleSiteAllocation(this.value, 'add-site-group')">
+                    <option value="technician" selected>Ground Operations</option>
+                    <option value="mid_level">Sub Admin</option>
+                    <option value="super_admin">Super Admin</option>
+                </select>
+            </div>
+            <div class="form-group" id="add-site-group">
+                <label>Allocate Terminal Sites</label>
+                <div class="checklist-box">
+                    {% for site in sites %}
+                        <label class="checklist-item">
+                            <input type="checkbox" name="assigned_sites[]" value="{{ site.id }}">
+                            <span>{{ site.name }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancel-add-user-modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal 2: Edit User & Permissions -->
+<div class="modal-overlay" id="edit-user-modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit User & Permissions</h2>
+            <button class="modal-close" id="close-edit-user-modal">&times;</button>
+        </div>
+        <form method="post" action="" id="edit-user-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="edit-username" class="form-control" readonly style="background-color: rgba(15,23,42,0.06); cursor: not-allowed;">
+            </div>
+            <div class="form-group">
+                <label for="edit-email">Email Address</label>
+                <input type="email" name="email" id="edit-email" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="edit-password">Reset Password (Leave blank to keep current)</label>
+                <input type="password" name="password" id="edit-password" class="form-control" placeholder="Enter new password">
+            </div>
+            <div class="form-group">
+                <label for="edit-role">System Role *</label>
+                <select name="role" id="edit-role" class="form-control" required onchange="toggleSiteAllocation(this.value, 'edit-site-group')">
+                    <option value="technician">Ground Operations</option>
+                    <option value="mid_level">Sub Admin</option>
+                    <option value="super_admin">Super Admin</option>
+                </select>
+            </div>
+            <div class="form-group" id="edit-site-group">
+                <label>Allocate Terminal Sites</label>
+                <div class="checklist-box">
+                    {% for site in sites %}
+                        <label class="checklist-item">
+                            <input type="checkbox" name="assigned_sites[]" value="{{ site.id }}">
+                            <span>{{ site.name }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancel-edit-user-modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Elements for Add User Modal
+    const addModal = document.getElementById('add-user-modal-overlay');
+    const openAddBtn = document.getElementById('open-add-user-btn');
+    const closeAddBtn = document.getElementById('close-add-user-modal');
+    const cancelAddBtn = document.getElementById('cancel-add-user-modal');
+
+    // Elements for Edit User Modal
+    const editModal = document.getElementById('edit-user-modal-overlay');
+    const closeEditBtn = document.getElementById('close-edit-user-modal');
+    const cancelEditBtn = document.getElementById('cancel-edit-user-modal');
+
+    // Open Add user modal
+    if (openAddBtn) {
+        openAddBtn.addEventListener('click', () => {
+            addModal.classList.add('active');
+        });
+    }
+
+    // Close Add User Modal
+    [closeAddBtn, cancelAddBtn].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', () => {
+                addModal.classList.remove('active');
+            });
+        }
+    });
+
+    // Close Edit User Modal
+    [closeEditBtn, cancelEditBtn].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', () => {
+                editModal.classList.remove('active');
+            });
+        }
+    });
+
+    // Close on clicking overlay background
+    window.addEventListener('click', (e) => {
+        if (e.target === addModal) addModal.classList.remove('active');
+        if (e.target === editModal) editModal.classList.remove('active');
+    });
+
+    // Show/hide site allocation list based on selected role
+    function toggleSiteAllocation(role, targetGroupId) {
+        const group = document.getElementById(targetGroupId);
+        if (role === 'super_admin' || role === 'mid_level') {
+            group.style.display = 'none';
+        } else {
+            group.style.display = 'block';
+        }
+    }
+
+    // Prefill and open edit user modal
+    function openEditUserModal(userId, username, email, role, sitesJson) {
+        const form = document.getElementById('edit-user-form');
+        
+        // Update form action url dynamically
+        form.action = '/users/' + userId + '/edit/';
+        
+        // Prefill values
+        document.getElementById('edit-username').value = username;
+        document.getElementById('edit-email').value = email;
+        document.getElementById('edit-role').value = role;
+        
+        // Disable role modification if user is weboccultadmin
+        const roleSelect = document.getElementById('edit-role');
+        if (username === 'weboccultadmin') {
+            roleSelect.disabled = true;
+        } else {
+            roleSelect.disabled = false;
+        }
+
+        // Parse allocated sites array and select checkboxes
+        // Format of sitesJson is [1, 2, ...]
+        try {
+            const allocatedIds = JSON.parse(sitesJson);
+            const checkboxes = document.querySelectorAll('#edit-site-group input[name="assigned_sites[]"]');
+            checkboxes.forEach(cb => {
+                cb.checked = allocatedIds.includes(parseInt(cb.value));
+            });
+        } catch (e) {
+            console.error("Failed to parse allocated site IDs", e);
+        }
+
+        // Trigger visual visibility toggle
+        toggleSiteAllocation(role, 'edit-site-group');
+
+        // Open modal
+        editModal.classList.add('active');
+    }
+</script>
+{% endblock %}

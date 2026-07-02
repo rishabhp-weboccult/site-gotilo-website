@@ -29,9 +29,9 @@
 
     /* Clean Stats Bar */
     .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        display: flex;
         gap: 1rem;
+        flex-wrap: wrap;
         margin-bottom: 2.5rem;
     }
 
@@ -41,8 +41,17 @@
         border-radius: 8px;
         padding: 1.25rem;
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: flex-start;
         gap: 1rem;
+        width: 100%;
+        max-width: 280px;
+    }
+
+    @media (max-width: 576px) {
+        .stat-card {
+            max-width: 100%;
+        }
     }
 
     .stat-icon {
@@ -232,11 +241,17 @@
         border-top: 1px solid var(--border-color);
         padding-top: 0.75rem;
     }
+
+    .badge-status-pending { background-color: rgba(249, 115, 22, 0.1); color: var(--accent-orange); border: 1px solid rgba(249, 115, 22, 0.15); }
+    .badge-status-in_progress { background-color: rgba(59, 130, 246, 0.1); color: var(--accent-cyan); border: 1px solid rgba(59, 130, 246, 0.15); }
+    .badge-status-working { background-color: rgba(139, 92, 246, 0.1); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.15); }
+    .badge-status-on_hold { background-color: rgba(100, 116, 139, 0.1); color: var(--text-muted); border: 1px solid rgba(100, 116, 139, 0.15); }
+    .badge-status-completed { background-color: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.15); }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
     <div class="dashboard-title">
         <h1>Fleet Operations Dashboard</h1>
         <p>Container yard vehicle telemetry & video monitoring nodes</p>
@@ -245,66 +260,112 @@
 
 <!-- Stats Strip -->
 <div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon green">
-            <i data-lucide="map-pin" style="width: 1.5rem; height: 1.5rem;"></i>
+    <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; min-height: 140px;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+            <div class="stat-icon">
+                <i data-lucide="truck" style="width: 1.5rem; height: 1.5rem;"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-title">Total Vehicles</span>
+                <span class="stat-value">{{ total_vehicles }}</span>
+            </div>
         </div>
-        <div class="stat-info">
-            <span class="stat-title">Locations</span>
-            <span class="stat-value">{{ total_sites }}</span>
-        </div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-icon">
-            <i data-lucide="truck" style="width: 1.5rem; height: 1.5rem;"></i>
-        </div>
-        <div class="stat-info">
-            <span class="stat-title">Total Fleet</span>
-            <span class="stat-value">{{ total_vehicles }}</span>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-icon cyan">
-            <i data-lucide="camera" style="width: 1.5rem; height: 1.5rem;"></i>
-        </div>
-        <div class="stat-info">
-            <span class="stat-title">Cameras Configured</span>
-            <span class="stat-value">{{ total_cameras }}</span>
-        </div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-icon orange">
-            <i data-lucide="cog" style="width: 1.5rem; height: 1.5rem;"></i>
-        </div>
-        <div class="stat-info">
-            <span class="stat-title">Forklifts</span>
-            <span class="stat-value">{{ forklifts }}</span>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-icon cyan">
-            <!-- Reuse reachstacker concept, or display scale -->
-            <i data-lucide="container" style="width: 1.5rem; height: 1.5rem;"></i>
-        </div>
-        <div class="stat-info">
-            <span class="stat-title">Reachstackers</span>
-            <span class="stat-value">{{ reachstackers }}</span>
+        <!-- Sub-types mini table -->
+        <div style="width: 100%; border-top: 1px solid var(--border-color); padding-top: 0.5rem; margin-top: 0.25rem;">
+            <table style="width: 100%; font-size: 0.75rem; border-collapse: collapse;">
+                <tbody>
+                    <tr style="border-bottom: 1px solid rgba(15,23,42,0.03);">
+                        <td style="padding: 0.2rem 0; color: var(--text-muted); display: flex; align-items: center; gap: 0.25rem;">
+                            <i data-lucide="container" style="width: 12px; height: 12px; color: var(--accent-cyan);"></i>
+                            Reachstackers
+                        </td>
+                        <td style="padding: 0.2rem 0; text-align: right; font-weight: 700; color: var(--text-primary);">{{ reachstackers }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(15,23,42,0.03);">
+                        <td style="padding: 0.2rem 0; color: var(--text-muted); display: flex; align-items: center; gap: 0.25rem;">
+                            <i data-lucide="cog" style="width: 12px; height: 12px; color: var(--accent-orange);"></i>
+                            Forklifts
+                        </td>
+                        <td style="padding: 0.2rem 0; text-align: right; font-weight: 700; color: var(--text-primary);">{{ forklifts }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.2rem 0; color: var(--text-muted); display: flex; align-items: center; gap: 0.25rem;">
+                            <i data-lucide="chevrons-left-right" style="width: 12px; height: 12px; color: var(--accent-purple);"></i>
+                            Side Shifters
+                        </td>
+                        <td style="padding: 0.2rem 0; text-align: right; font-weight: 700; color: var(--text-primary);">{{ side_shifters }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-icon purple">
-            <i data-lucide="chevrons-left-right" style="width: 1.5rem; height: 1.5rem;"></i>
+    <!-- Active Device Failure Logs Table View -->
+    <div class="stat-card" style="flex: 1 1 300px; min-width: 0; max-width: 100%; min-height: 140px; justify-content: flex-start; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.35rem;">
+            <div class="stat-title" style="display: flex; align-items: center; gap: 0.25rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">
+                <i data-lucide="alert-triangle" style="width: 14px; height: 14px; color: var(--accent-orange);"></i>
+                Active Device Failure Logs
+            </div>
+            <span class="badge badge-orange" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">
+                {{ active_issues.count }} Active
+            </span>
         </div>
-        <div class="stat-info">
-            <span class="stat-title">Side Shifters</span>
-            <span class="stat-value">{{ side_shifters }}</span>
-        </div>
+        
+        {% if active_issues %}
+            <div style="overflow-x: auto; width: 100%;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <th style="padding: 0.25rem; font-weight: 600; color: var(--text-primary); width: 20%;">Vehicle</th>
+                            <th style="padding: 0.25rem; font-weight: 600; color: var(--text-primary); width: 25%;">Site</th>
+                            <th style="padding: 0.25rem; font-weight: 600; color: var(--text-primary); width: 40%;">Failure Details</th>
+                            <th style="padding: 0.25rem; font-weight: 600; color: var(--text-primary); text-align: right; width: 15%;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for issue in active_issues|slice:":3" %}
+                            <tr style="border-bottom: 1px solid rgba(15,23,42,0.03);">
+                                <td style="padding: 0.35rem 0.25rem; font-weight: 700; color: var(--text-primary);">
+                                    <a href="{% url 'vehicle_detail' issue.vehicle.id %}" style="text-decoration: none; color: inherit;">
+                                        {{ issue.vehicle.name }}
+                                    </a>
+                                </td>
+                                <td style="padding: 0.35rem 0.25rem; font-weight: 600; color: var(--primary);">
+                                    <a href="{% url 'site_detail' issue.vehicle.site.id %}" style="text-decoration: none; color: inherit;">
+                                        {{ issue.vehicle.site.name }}
+                                    </a>
+                                </td>
+                                <td style="padding: 0.35rem 0.25rem; color: var(--text-secondary); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    {{ issue.problem_details }}
+                                </td>
+                                <td style="padding: 0.35rem 0.25rem; text-align: right;">
+                                    <span class="badge badge-status-{{ issue.permanent_solution_status }}" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">
+                                        {{ issue.get_permanent_solution_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        {% if active_issues.count > 3 %}
+                            <tr>
+                                <td colspan="4" style="padding-top: 0.35rem; text-align: center;">
+                                    <a href="{% url 'device_issues' %}" style="font-size: 0.7rem; font-weight: 600; color: var(--primary); text-decoration: none;">
+                                        View all {{ active_issues.count }} active issues &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; color: var(--text-muted); font-size: 0.75rem; text-align: center; padding: 2rem 0; width: 100%;">
+                <i data-lucide="check-circle" style="width: 1.5rem; height: 1.5rem; color: var(--accent-green); margin-bottom: 0.25rem;"></i>
+                No active device issues logged across sites.
+            </div>
+        {% endif %}
     </div>
+
 </div>
 
 
@@ -357,12 +418,21 @@
         <div class="glass-panel text-center" style="padding: 3rem 1.5rem;">
             <i data-lucide="map" style="width: 2.5rem; height: 2.5rem; color: var(--text-muted); margin-bottom: 0.75rem;"></i>
             <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem;">No sites configured</h3>
-            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">Register your first container yard location to get started.</p>
-            <button class="btn btn-primary" onclick="document.getElementById('site-modal-overlay').classList.add('active')">Register First Site</button>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+                {% if user.profile.role != 'technician' %}
+                    Register your first container yard location to get started.
+                {% else %}
+                    You have not been allocated any terminal sites yet. Please contact a Super Admin.
+                {% endif %}
+            </p>
+            {% if user.profile.role != 'technician' %}
+                <button class="btn btn-primary" onclick="document.getElementById('site-modal-overlay').classList.add('active')">Register First Site</button>
+            {% endif %}
         </div>
     {% endif %}
 </div>
 
+{% if user.profile.role != 'technician' %}
 <!-- Modal Form for Adding Site -->
 <div class="modal-overlay" id="site-modal-overlay">
     <div class="modal">
@@ -391,6 +461,7 @@
         </form>
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
@@ -400,31 +471,33 @@
     const closeBtn = document.getElementById('close-site-modal');
     const cancelBtn = document.getElementById('cancel-site-modal');
 
-    if (openBtn) {
+    if (openBtn && modalOverlay) {
         openBtn.addEventListener('click', () => {
             modalOverlay.classList.add('active');
         });
     }
 
     [closeBtn, cancelBtn].forEach(btn => {
-        if (btn) {
+        if (btn && modalOverlay) {
             btn.addEventListener('click', () => {
                 modalOverlay.classList.remove('active');
             });
         }
     });
 
-    modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) {
-            modalOverlay.classList.remove('active');
-        }
-    });
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                modalOverlay.classList.remove('active');
+            }
+        });
 
-    // Automatically trigger modal if user landed with the ?add_site=1 parameter
-    if (window.location.search.includes('add_site=1')) {
-        modalOverlay.classList.add('active');
-        // Clean URL to avoid reopening on reload
-        history.replaceState(null, '', window.location.pathname);
+        // Automatically trigger modal if user landed with the ?add_site=1 parameter
+        if (window.location.search.includes('add_site=1')) {
+            modalOverlay.classList.add('active');
+            // Clean URL to avoid reopening on reload
+            history.replaceState(null, '', window.location.pathname);
+        }
     }
 </script>
 {% endblock %}

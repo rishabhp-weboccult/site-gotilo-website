@@ -1,0 +1,406 @@
+{% extends 'vehicles/base.html' %}
+
+{% block title %}{{ vehicle.name }} Detail | Gotilo Container Fleet{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .info-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .specs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .spec-item {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .spec-icon {
+        background-color: rgba(15, 23, 42, 0.05);
+        color: var(--text-secondary);
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .spec-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .spec-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        letter-spacing: 0.025em;
+    }
+
+    .spec-value {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .camera-card {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .issue-item {
+        background-color: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .badge-status-pending { background-color: rgba(249, 115, 22, 0.1); color: var(--accent-orange); border: 1px solid rgba(249, 115, 22, 0.15); }
+    .badge-status-in_progress { background-color: rgba(59, 130, 246, 0.1); color: var(--accent-cyan); border: 1px solid rgba(59, 130, 246, 0.15); }
+    .badge-status-working { background-color: rgba(139, 92, 246, 0.1); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.15); }
+    .badge-status-on_hold { background-color: rgba(100, 116, 139, 0.1); color: var(--text-muted); border: 1px solid rgba(100, 116, 139, 0.15); }
+    .badge-status-completed { background-color: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.15); }
+
+    @media print {
+        .top-navbar-fixed,
+        header,
+        aside,
+        .sidebar,
+        #sidebar-toggle,
+        .btn,
+        .btn-secondary,
+        .btn-danger,
+        .no-print,
+        form,
+        .issue-update-form {
+            display: none !important;
+        }
+
+        .print-only {
+            display: block !important;
+        }
+
+        body, .app-body-wrapper, main {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            display: block !important;
+        }
+
+        .detail-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1.5rem !important;
+        }
+
+        .info-card {
+            border: 1px solid var(--border-color) !important;
+            box-shadow: none !important;
+            background: #ffffff !important;
+            page-break-inside: avoid;
+            margin-bottom: 1.5rem !important;
+        }
+
+        h1 {
+            font-size: 1.75rem !important;
+            margin-top: 1rem !important;
+            margin-bottom: 1rem !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            padding-bottom: 0.5rem !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Print only Header -->
+<div class="print-only" style="display: none; border-bottom: 2px solid var(--primary); padding-bottom: 1rem; margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.025em;">
+            GOTILO <span style="font-weight: 400; color: var(--text-secondary);">FLEET REPORT</span>
+        </span>
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">
+            Generated: {% now "Y-m-d H:i" %}
+        </span>
+    </div>
+    <div style="margin-top: 1rem; font-size: 0.95rem; color: var(--text-secondary);">
+        <strong>Report Type:</strong> Vehicle Specifications & Node Configuration Details
+    </div>
+</div>
+
+<!-- Header details -->
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;" class="no-print">
+            <a href="{% url 'site_fleet_deployment' vehicle.site.id %}" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+                <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                Back to {{ vehicle.site.name }} Fleet
+            </a>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <h1 style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.025em;">
+                {{ vehicle.name }}
+            </h1>
+            <div class="no-print">
+                {% if vehicle.availability_status == 'available' %}
+                    <span class="badge badge-green">Available</span>
+                {% elif vehicle.availability_status == 'busy' %}
+                    <span class="badge badge-orange">Busy</span>
+                {% elif vehicle.availability_status == 'break' %}
+                    <span class="badge badge-purple">On Break</span>
+                {% elif vehicle.availability_status == 'maintenance' %}
+                    <span class="badge badge-red">Under Maintenance</span>
+                {% endif %}
+            </div>
+            <div class="no-print" style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; background-color: rgba(15,23,42,0.05); padding: 0.2rem 0.5rem; border-radius: 4px;">
+                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: {% if vehicle.device_status == 'Active' %}var(--accent-green){% else %}var(--accent-red){% endif %};"></span>
+                <span style="font-weight: 500;">Controller: {{ vehicle.device_status|default:"Active" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; align-items: center;" class="no-print">
+        <button onclick="window.print()" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+            <i data-lucide="file-text" style="width: 14px; height: 14px;"></i>
+            Save as PDF
+        </button>
+        {% if user.profile.role != 'technician' %}
+        <a href="{% url 'edit_vehicle' vehicle.id %}" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+            <i data-lucide="edit" style="width: 14px; height: 14px;"></i>
+            Edit Vehicle
+        </a>
+        <form action="{% url 'delete_vehicle' vehicle.id %}" method="post" onsubmit="return confirm('Are you sure you want to delete vehicle \'{{ vehicle.name }}\'?');" style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                Delete
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="detail-grid">
+    <!-- Left Column (General Specs, Cameras, Status Forms) -->
+    <div>
+        <!-- Specifications panel -->
+        <div class="info-card">
+            <h2 style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; border-left: 3px solid var(--primary); padding-left: 0.5rem;">
+                Vehicle Specifications
+            </h2>
+            <div class="specs-grid">
+                <div class="spec-item">
+                    <div class="spec-icon"><i data-lucide="hash"></i></div>
+                    <div class="spec-info">
+                        <span class="spec-label">Box Number</span>
+                        <span class="spec-value">{{ vehicle.box_number|default:"—" }}</span>
+                    </div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-icon"><i data-lucide="truck"></i></div>
+                    <div class="spec-info">
+                        <span class="spec-label">Vehicle Number</span>
+                        <span class="spec-value">{{ vehicle.vehicle_number|default:"—" }}</span>
+                    </div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-icon"><i data-lucide="cpu"></i></div>
+                    <div class="spec-info">
+                        <span class="spec-label">Controller Model</span>
+                        <span class="spec-value">{{ vehicle.device_name|default:"—" }}</span>
+                    </div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-icon"><i data-lucide="wifi"></i></div>
+                    <div class="spec-info">
+                        <span class="spec-label">Controller IP</span>
+                        <span class="spec-value" style="color: var(--primary);">{{ vehicle.device_ip|default:"—" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if vehicle.other_info %}
+            <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                <h3 style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem;">Specs & Operational Notes</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; margin: 0;">{{ vehicle.other_info }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Camera streams panel -->
+        <div class="info-card">
+            <h2 style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem; border-left: 3px solid var(--accent-cyan); padding-left: 0.5rem;">
+                Configured IP Video Streams ({{ vehicle.cameras.count }})
+            </h2>
+
+            {% if vehicle.cameras.all %}
+                {% for camera in vehicle.cameras.all %}
+                <div class="camera-card">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="background-color: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); width: 2rem; height: 2rem; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="video" style="width: 16px; height: 16px;"></i>
+                        </div>
+                        <div>
+                            <span style="font-weight: 600; font-size: 0.85rem; display: block;">{{ camera.name }}</span>
+                            <span style="font-size: 0.7rem; color: var(--text-muted); font-family: monospace;">{{ camera.rtsp_url|default:"RTSP stream url unset" }}</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-weight: 600; color: var(--accent-green); font-size: 0.8rem; font-family: monospace;">
+                            {{ camera.ip_address }}{% if camera.port != 80 %}:{{ camera.port }}{% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 1.5rem; border: 1px dashed var(--border-color); border-radius: 6px;">
+                    <i data-lucide="video-off" style="width: 1.5rem; height: 1.5rem; color: var(--text-muted); margin-bottom: 0.25rem;"></i>
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0; font-style: italic;">No cameras configured for this vehicle.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column (Driver details, Location detail links, Vehicle device issues history) -->
+    <div>
+        <!-- Driver and status settings -->
+        <div class="info-card">
+            <h2 style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem; border-left: 3px solid var(--accent-orange); padding-left: 0.5rem;">
+                Work context
+            </h2>
+
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.5rem;">
+                    <span style="color: var(--text-muted);">Assigned Terminal Site</span>
+                    <a href="{% url 'site_detail' vehicle.site.id %}" style="font-weight: 700; color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 0.2rem;">
+                        {{ vehicle.site.name }}
+                        <i data-lucide="external-link" style="width: 12px; height: 12px;"></i>
+                    </a>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.5rem;">
+                    <span style="color: var(--text-muted);">Driver Name</span>
+                    <strong style="color: var(--text-primary);">{{ vehicle.driver_name|default:"Not Assigned" }}</strong>
+                </div>
+                {% if vehicle.driver_number %}
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.5rem;">
+                    <span style="color: var(--text-muted);">Driver Phone</span>
+                    <span style="font-family: monospace; font-weight: 500;">{{ vehicle.driver_number }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+                <form action="{% url 'update_vehicle_status' vehicle.id %}" method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'vehicle_detail' vehicle.id %}">
+                    <label for="id_status_select" style="font-weight: 600; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Update Operational Status</label>
+                    <select name="availability_status" id="id_status_select" onchange="this.form.submit()" class="form-control" style="cursor: pointer; width: 100%;">
+                        {% for value, label in vehicle.AVAILABILITY_CHOICES %}
+                            <option value="{{ value }}" {% if vehicle.availability_status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <!-- Vehicle Issues logs -->
+        <div class="info-card no-print">
+            <h2 style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem; border-left: 3px solid var(--accent-purple); padding-left: 0.5rem;">
+                Device Tracker Logs
+            </h2>
+
+            {% if issues %}
+                {% for issue in issues %}
+                <div class="issue-item">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.25rem;">
+                            <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
+                            {{ issue.issue_date_time|date:"M d, H:i" }}
+                        </span>
+                        {% if issue.permanent_solution_status == 'pending' %}
+                            <span class="badge badge-status-pending" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">Pending</span>
+                        {% elif issue.permanent_solution_status == 'in_progress' %}
+                            <span class="badge badge-status-in_progress" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">In Progress</span>
+                        {% elif issue.permanent_solution_status == 'working' %}
+                            <span class="badge badge-status-working" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">Working</span>
+                        {% elif issue.permanent_solution_status == 'on_hold' %}
+                            <span class="badge badge-status-on_hold" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">On Hold</span>
+                        {% elif issue.permanent_solution_status == 'completed' %}
+                            <span class="badge badge-status-completed" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">Completed</span>
+                        {% endif %}
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0.25rem 0; line-height: 1.35;">{{ issue.problem_details }}</p>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Assigned to: <strong>{{ issue.assigned_to.username|default:"Unassigned" }}</strong></span>
+                    </div>
+
+                    <!-- Direct Check updates inline -->
+                    <form method="post" action="{% url 'update_issue_status' issue.id %}" class="issue-update-form" style="border-top: 1px dashed rgba(0,0,0,0.05); margin-top: 0.5rem; padding-top: 0.4rem; display: flex; justify-content: space-between; font-size: 0.75rem; gap: 0.5rem;">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'vehicle_detail' vehicle.id %}">
+                        <select name="permanent_solution_status" onchange="this.form.submit()" class="form-control" style="width: auto; padding: 0.1rem 1.25rem 0.1rem 0.35rem; font-size: 0.7rem; height: auto; cursor: pointer;">
+                            {% for val, label in status_choices %}
+                                <option value="{{ val }}" {% if issue.permanent_solution_status == val %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <label class="flex items-center gap-1" style="font-size: 0.7rem; color: var(--text-secondary); cursor: pointer; margin: 0;">
+                                <input type="checkbox" name="temp_solution_applied" {% if issue.temp_solution_applied %}checked{% endif %} onchange="this.form.submit()">
+                                Temp
+                            </label>
+                            <label class="flex items-center gap-1" style="font-size: 0.7rem; color: var(--text-secondary); cursor: pointer; margin: 0;">
+                                <input type="checkbox" name="permanent_solution_required" {% if issue.permanent_solution_required %}checked{% endif %} onchange="this.form.submit()">
+                                Perm
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 1.5rem; border: 1px dashed var(--border-color); border-radius: 6px;">
+                    <i data-lucide="shield-check" style="width: 1.5rem; height: 1.5rem; color: var(--accent-green); margin-bottom: 0.25rem;"></i>
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0; font-weight: 500;">All Telemetry OK</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

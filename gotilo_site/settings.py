@@ -78,10 +78,16 @@ WSGI_APPLICATION = "gotilo_site.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+sqlite_db_path = os.environ.get("SQLITE_DB_PATH")
+if sqlite_db_path:
+    db_file = Path(sqlite_db_path)
+else:
+    db_file = BASE_DIR / "db.sqlite3"
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": db_file,
     }
 }
 

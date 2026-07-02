@@ -433,6 +433,296 @@
             height: 1.15rem;
             stroke-width: 2;
         }
+
+        /* App Container Wrapper */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* Top Navigation Header bar */
+        header.top-navbar-fixed {
+            border-bottom: 2px solid var(--primary);
+            background-color: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            height: 4rem;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .navbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1.5rem;
+            height: 100%;
+        }
+
+        /* App Body Wrapper beneath top nav */
+        .app-body-wrapper {
+            display: flex;
+            flex-grow: 1;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Collapsible Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: #0f172a; /* Dark Slate-900 */
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            position: sticky;
+            top: 4rem;
+            height: calc(100vh - 4rem);
+            overflow-y: auto;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s;
+            z-index: 95;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            border-right: none;
+            overflow: hidden;
+        }
+
+        .sidebar-menu {
+            padding: 1.25rem 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            flex-grow: 1;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            color: #94a3b8; /* Slate-400 */
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .sidebar-link i,
+        .sidebar-link svg {
+            width: 18px;
+            height: 18px;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.04);
+            color: #ffffff;
+        }
+
+        .sidebar-link.active {
+            background-color: rgba(220, 38, 38, 0.1);
+            color: #ffffff;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .sidebar-link.active i,
+        .sidebar-link.active svg {
+            color: var(--primary);
+        }
+        
+        .sidebar-dropdown.active .dropdown-chevron {
+            transform: rotate(180deg);
+        }
+
+        .sidebar-submenu {
+            padding-left: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            margin-top: 0.2rem;
+        }
+
+        .sidebar-sublink {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            color: #94a3b8; /* Slate-400 */
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .sidebar-sublink i,
+        .sidebar-sublink svg {
+            width: 14px;
+            height: 14px;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .sidebar-sublink:hover {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.04);
+        }
+
+        .sidebar-sublink.active {
+            color: #ffffff;
+            background-color: rgba(220, 38, 38, 0.08);
+            border-left: 2px solid var(--primary);
+        }
+
+        .sidebar-footer {
+            padding: 1.25rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #0b0f19;
+            white-space: nowrap;
+        }
+
+        .sidebar-user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            font-size: 0.8rem;
+            max-width: 160px;
+            overflow: hidden;
+        }
+
+        .user-role-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #64748b;
+            letter-spacing: 0.05em;
+        }
+
+        .user-name {
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar-logout-btn {
+            background-color: rgba(220, 38, 38, 0.1);
+            color: #ef4444;
+            border: none;
+            padding: 0.45rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .sidebar-logout-btn:hover {
+            background-color: #dc2626;
+            color: #ffffff;
+        }
+
+        /* Main Content Container */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 4rem);
+            min-width: 0;
+            background-color: #f8fafc;
+        }
+
+        /* Styles for unauthenticated wrapper */
+        .app-layout.unauthenticated {
+            background-color: #f1f5f9;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 4rem);
+        }
+        .app-layout.unauthenticated .main-content {
+            background-color: transparent;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            flex-grow: 1;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed !important;
+                top: 4rem;
+                left: 0;
+                height: calc(100vh - 4rem);
+                z-index: 150;
+                transform: translateX(0);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+                width: 260px !important;
+            }
+            .app-body-wrapper {
+                overflow-x: hidden;
+            }
+            
+            /* Navbar adjustments */
+            .navbar {
+                padding: 0 0.75rem;
+                gap: 1.25rem;
+            }
+            .brand {
+                margin-right: 0.5rem;
+            }
+            .nav-selector-container {
+                margin-left: 0.5rem !important;
+            }
+            .nav-username {
+                display: none !important;
+            }
+            .nav-selector-label {
+                display: none !important;
+            }
+            .nav-select {
+                min-width: 110px !important;
+                max-width: 140px !important;
+                font-size: 0.75rem !important;
+            }
+            header .navbar > div:last-child {
+                gap: 0.75rem !important;
+            }
+
+            @media (max-width: 576px) {
+                .brand-text {
+                    display: none !important;
+                }
+                .logout-text {
+                    display: none !important;
+                }
+                .nav-select {
+                    min-width: 100px !important;
+                    max-width: 120px !important;
+                }
+            }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -503,60 +793,186 @@
         </defs>
     </svg>
 
-    <header>
-        <div class="container navbar">
-            <a href="{% url 'dashboard' %}" class="brand" title="Dashboard">
-                <span class="brand-logo-icon">
-                    <i data-lucide="container" style="width: 1.4rem; height: 1.4rem;"></i>
-                </span>
-                GOTILO&nbsp;<span>FLEET</span>
-            </a>
-            
-            <!-- Navbar Actions on the Right: Site Selection Dropdown & Add Site button only -->
-            <div class="navbar-right">
-                <div class="nav-selector-container">
-                    <span class="nav-selector-label">Site Selection:</span>
-                    <select class="nav-select" onchange="if(this.value) { window.location.href='/site/' + this.value + '/'; } else { window.location.href='/'; }">
-                        <option value="">-- All Sites --</option>
-                        {% for s in all_sites %}
-                            <option value="{{ s.id }}" {% if site.id == s.id %}selected{% endif %}>{{ s.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <!-- Plus sign linking to dashboard with add_site parameter -->
-                    <a href="/?add_site=1" class="nav-add-btn" id="nav-add-site-link" title="Add New Site">
-                        <i data-lucide="plus" style="width: 1rem; height: 1rem;"></i>
+    <div class="app-container">
+        <!-- Top Navbar (Always Visible) -->
+        <header class="top-navbar-fixed">
+            <div class="navbar">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    {% if user.is_authenticated %}
+                    <!-- Sidebar Toggle Hamburger Button -->
+                    <button id="sidebar-toggle" style="background: none; border: none; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0.5rem; border-radius: 4px; transition: var(--transition);">
+                        <i data-lucide="menu" style="width: 1.25rem; height: 1.25rem;"></i>
+                    </button>
+                    {% endif %}
+                    
+                    <a href="{% url 'dashboard' %}" class="brand" title="Dashboard" style="margin-left: {% if user.is_authenticated %}0.25rem{% else %}0{% endif %};">
+                        <span class="brand-logo-icon" style="color: var(--primary);">
+                            <i data-lucide="container" style="width: 1.4rem; height: 1.4rem;"></i>
+                        </span>
+                        <span class="brand-text">GOTILO&nbsp;<span>FLEET</span></span>
                     </a>
                 </div>
+                
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    {% if user.is_authenticated %}
+                        <!-- Site Selector Context -->
+                        {% if user.profile.role != 'technician' or all_sites %}
+                        <div class="nav-selector-container" style="margin: 0;">
+                            <span class="nav-selector-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Site:</span>
+                            <select class="nav-select" style="font-size: 0.8rem; padding: 0.2rem 1.75rem 0.2rem 0.5rem; height: auto;" onchange="if(this.value) { window.location.href='/site/' + this.value + '/'; } else { window.location.href='/?clear_site=1'; }">
+                                <option value="">-- All Sites --</option>
+                                {% for s in all_sites %}
+                                    <option value="{{ s.id }}" {% if site.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if user.profile.role != 'technician' %}
+                            <a href="/?add_site=1" class="nav-add-btn" id="nav-add-site-link" title="Add New Site" style="width: 1.65rem; height: 1.65rem;">
+                                <i data-lucide="plus" style="width: 0.85rem; height: 0.85rem;"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- User and Logout -->
+                        <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem;">
+                            <span class="nav-username" style="font-weight: 600; color: var(--text-primary);">{{ user.username }}</span>
+                            <a href="{% url 'logout' %}" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; height: auto;">
+                                <i data-lucide="log-out" style="width: 12px; height: 12px;"></i>
+                                <span class="logout-text">Logout</span>
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        {% if user.is_authenticated %}
+        <!-- Main Wrapper (Sidebar & Content Area underneath Top Nav) -->
+        <div class="app-body-wrapper">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="app-sidebar">
+                <nav class="sidebar-menu">
+                    <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.path == '/' or '/site/' in request.path %}active{% endif %}">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    
+                    <a href="{% url 'vehicle_management' %}" class="sidebar-link {% if request.resolver_match.url_name == 'vehicle_management' or '/vehicle/' in request.path %}active{% endif %}">
+                        <i data-lucide="truck"></i>
+                        <span>Vehicle Management</span>
+                    </a>
+                    
+                    <div class="sidebar-dropdown {% if '/issues/' in request.path %}active{% endif %}">
+                        <div class="sidebar-link {% if '/issues/' in request.path %}active{% endif %}" onclick="toggleSidebarDropdown(event, 'issues-dropdown')" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                            <span style="display: flex; align-items: center; gap: 0.75rem; pointer-events: none;">
+                                <i data-lucide="alert-triangle"></i>
+                                <span>Device Issue Track</span>
+                            </span>
+                            <i data-lucide="chevron-down" class="dropdown-chevron" style="width: 14px; height: 14px; transition: transform 0.2s; pointer-events: none;"></i>
+                        </div>
+                        <div class="sidebar-submenu" id="issues-dropdown" style="display: {% if '/issues/' in request.path %}flex{% else %}none{% endif %};">
+                            <a href="{% url 'add_device_issue' %}" class="sidebar-sublink {% if request.resolver_match.url_name == 'add_device_issue' %}active{% endif %}">
+                                <i data-lucide="plus-circle" style="width: 12px; height: 12px;"></i>
+                                <span>Add Device Issue</span>
+                            </a>
+                            <a href="{% url 'device_issues' %}" class="sidebar-sublink {% if request.resolver_match.url_name == 'device_issues' %}active{% endif %}">
+                                <i data-lucide="list-checks" style="width: 12px; height: 12px;"></i>
+                                <span>Logs of Device Issue</span>
+                            </a>
+                            <a href="{% url 'allocated_device_issues' %}" class="sidebar-sublink {% if request.resolver_match.url_name == 'allocated_device_issues' %}active{% endif %}">
+                                <i data-lucide="user-check" style="width: 12px; height: 12px;"></i>
+                                <span>Allocated Device Issue</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    {% if user.profile.role == 'super_admin' %}
+                    <a href="{% url 'user_management' %}" class="sidebar-link {% if '/users/' in request.path %}active{% endif %}">
+                        <i data-lucide="users"></i>
+                        <span>Manage Users</span>
+                    </a>
+                    {% endif %}
+                </nav>
+
+                <!-- Sidebar Footer showing user context -->
+                <div class="sidebar-footer">
+                    <div class="sidebar-user-info">
+                        <span class="user-role-label">Role:</span>
+                        <strong class="user-name" style="color: #cbd5e1;">
+                            {{ user.profile.get_role_display }}
+                        </strong>
+                    </div>
+                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">v1.2</div>
+                </div>
+            </aside>
+
+            <!-- Content Panel -->
+            <div class="main-content">
+                <!-- Messages Floating Wrapper -->
+                {% if messages %}
+                <div class="alert-container">
+                    {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}error{% else %}success{% endif %}" id="alert-{{ forloop.counter }}">
+                        <span class="flex items-center gap-2">
+                            <i data-lucide="{% if message.tags == 'error' %}alert-circle{% else %}check-circle{% endif %}" style="width: 1.15rem; height: 1.15rem;"></i>
+                            {{ message }}
+                        </span>
+                        <button class="alert-close" onclick="document.getElementById('alert-{{ forloop.counter }}').remove()">&times;</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <main style="flex-grow: 1; padding: 2rem; overflow-y: auto;">
+                    {% block content %}{% endblock %}
+                </main>
+
+                <footer style="padding: 1.5rem; text-align: center; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted); background: #ffffff;">
+                    &copy; 2026 Gotilo-Container Terminal Management. All rights reserved.
+                </footer>
             </div>
         </div>
-    </header>
-
-    <!-- Messages Floating Wrapper -->
-    {% if messages %}
-    <div class="alert-container">
-        {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'error' %}error{% else %}success{% endif %}" id="alert-{{ forloop.counter }}">
-            <span class="flex items-center gap-2">
-                <i data-lucide="{% if message.tags == 'error' %}alert-circle{% else %}check-circle{% endif %}" style="width: 1.15rem; height: 1.15rem;"></i>
-                {{ message }}
-            </span>
-            <button class="alert-close" onclick="document.getElementById('alert-{{ forloop.counter }}').remove()">&times;</button>
+        {% else %}
+        <!-- Unauthenticated layout (e.g. login screen) -->
+        <div class="app-layout unauthenticated" style="flex-grow: 1;">
+            <div class="main-content">
+                {% if messages %}
+                <div class="alert-container" style="position: absolute; top: 5rem; right: 1rem; width: 320px; z-index: 1000;">
+                    {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}error{% else %}success{% endif %}" id="alert-{{ forloop.counter }}">
+                        <span class="flex items-center gap-2">
+                            <i data-lucide="{% if message.tags == 'error' %}alert-circle{% else %}check-circle{% endif %}" style="width: 1.15rem; height: 1.15rem;"></i>
+                            {{ message }}
+                        </span>
+                        <button class="alert-close" onclick="document.getElementById('alert-{{ forloop.counter }}').remove()">&times;</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <main style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 2rem; flex-grow: 1;">
+                    {% block unauth_content %}{% endblock %}
+                </main>
+                
+                <footer style="padding: 1.5rem; text-align: center; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted); background: #ffffff; width: 100%;">
+                    &copy; 2026 Gotilo-Container Terminal Management. All rights reserved.
+                </footer>
+            </div>
         </div>
-        {% endfor %}
+        {% endif %}
     </div>
-    {% endif %}
-
-    <main class="container">
-        {% block content %}{% endblock %}
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2026 Gotilo-Container Terminal Management. All rights reserved.</p>
-        </div>
-    </footer>
 
     <script>
+        // Apply collapse state on page load before Lucide icon generation
+        (function() {
+            const sidebar = document.getElementById('app-sidebar');
+            if (sidebar) {
+                if (localStorage.getItem('sidebar-collapsed') === 'true' || window.innerWidth <= 768) {
+                    sidebar.classList.add('collapsed');
+                }
+            }
+        })();
+
         // Initialize Lucide Icons
         lucide.createIcons();
 
@@ -569,6 +985,44 @@
                 e.preventDefault();
                 dashboardModalOverlay.classList.add('active');
             });
+        }
+
+        // Toggle Sidebar collapsed state with localStorage caching
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('app-sidebar');
+        
+        if (sidebarToggle && sidebar) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebar-collapsed', isCollapsed ? 'true' : 'false');
+            });
+        }
+
+        // Close sidebar when clicking main content area on mobile
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent && sidebar) {
+            mainContent.addEventListener('click', () => {
+                if (window.innerWidth <= 768 && !sidebar.classList.contains('collapsed')) {
+                    sidebar.classList.add('collapsed');
+                }
+            });
+        }
+        // Toggle Sidebar Dropdowns
+        function toggleSidebarDropdown(event, dropdownId) {
+            event.preventDefault();
+            event.stopPropagation();
+            const submenu = document.getElementById(dropdownId);
+            const parent = submenu.parentElement;
+            
+            if (submenu.style.display === 'none' || submenu.style.display === '') {
+                submenu.style.display = 'flex';
+                parent.classList.add('active');
+            } else {
+                submenu.style.display = 'none';
+                parent.classList.remove('active');
+            }
+            lucide.createIcons();
         }
 
         // Auto-dismiss success and error toasts after 4 seconds

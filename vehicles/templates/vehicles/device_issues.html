@@ -1,0 +1,526 @@
+{% extends 'vehicles/base.html' %}
+
+{% block title %}Device Issue Track Logs | Gotilo Container Fleet{% endblock %}
+
+{% block extra_css %}
+<style>
+    .toolbar-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .filter-form {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+        margin: 0;
+    }
+
+    .filter-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-item label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+        margin: 0;
+    }
+
+    .filter-item input[type="date"],
+    .filter-item select {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.8rem;
+        height: auto;
+        width: auto;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        background-color: #ffffff;
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+
+    .export-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .table-container {
+        background-color: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        overflow-x: auto;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .logs-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.85rem;
+    }
+
+    .logs-table th {
+        background-color: var(--card-bg);
+        color: var(--text-primary);
+        font-weight: 600;
+        padding: 0.75rem 1rem;
+        border-bottom: 2px solid var(--border-color);
+        white-space: nowrap;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .logs-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        vertical-align: middle;
+    }
+
+    .logs-table tr:hover {
+        background-color: rgba(15, 23, 42, 0.015);
+    }
+
+    .badge-status-pending { background-color: rgba(249, 115, 22, 0.1); color: var(--accent-orange); border: 1px solid rgba(249, 115, 22, 0.15); }
+    .badge-status-in_progress { background-color: rgba(59, 130, 246, 0.1); color: var(--accent-cyan); border: 1px solid rgba(59, 130, 246, 0.15); }
+    .badge-status-working { background-color: rgba(139, 92, 246, 0.1); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.15); }
+    .badge-status-on_hold { background-color: rgba(100, 116, 139, 0.1); color: var(--text-muted); border: 1px solid rgba(100, 116, 139, 0.15); }
+    .badge-status-completed { background-color: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.15); }
+
+    /* Modal Form dialog */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        width: 100%;
+        max-width: 450px;
+        padding: 1.75rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        transform: translateY(-10px);
+        transition: transform 0.2s ease;
+    }
+
+    .modal-overlay.active .modal {
+        transform: translateY(0);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.25rem;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.025em;">
+            Device Issue Track Logs
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+            Log history and status updates for malfunctioning hardware controllers or telemetry.
+        </p>
+    </div>
+    {% if user.profile.role != 'technician' %}
+    <a href="{% url 'add_device_issue' %}" class="btn btn-primary">
+        <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+        Log Hardware Issue
+    </a>
+    {% endif %}
+</div>
+
+<!-- Horizontal Filter & Export Toolbar -->
+<div class="toolbar-container">
+    <form method="get" action="" class="filter-form">
+        <div class="filter-item">
+            <label for="id_start_date">Start Date</label>
+            <input type="date" name="start_date" id="id_start_date" value="{{ start_date|default:'' }}">
+        </div>
+
+        <div class="filter-item">
+            <label for="id_end_date">End Date</label>
+            <input type="date" name="end_date" id="id_end_date" value="{{ end_date|default:'' }}">
+        </div>
+
+        <div class="filter-item">
+            <label for="id_limit">Limit</label>
+            <select name="limit" id="id_limit">
+                <option value="10" {% if limit == '10' or not limit %}selected{% endif %}>Last 10 Logs</option>
+                <option value="50" {% if limit == '50' %}selected{% endif %}>Last 50 Logs</option>
+                <option value="100" {% if limit == '100' %}selected{% endif %}>Last 100 Logs</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; height: auto;">
+            <i data-lucide="filter" style="width: 12px; height: 12px;"></i>
+            Apply Filters
+        </button>
+        
+        {% if start_date or end_date or limit != '10' %}
+        <a href="{% url 'device_issues' %}" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; height: auto; background-color: transparent; border-color: transparent; color: var(--text-muted);">
+            Clear
+        </a>
+        {% endif %}
+    </form>
+
+    <div class="export-group">
+        <button type="button" onclick="exportTableToCSV('device_issue_logs.csv')" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; height: auto; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: var(--accent-green);"></i>
+            Export CSV
+        </button>
+        <button type="button" onclick="exportTableToPDF()" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; height: auto; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <i data-lucide="file-text" style="width: 14px; height: 14px; color: var(--primary);"></i>
+            Export PDF
+        </button>
+    </div>
+</div>
+
+<!-- Logs Data Table -->
+<div class="table-container">
+    {% if issues %}
+        <table class="logs-table">
+            <thead>
+                <tr>
+                    <th>Vehicle</th>
+                    <th>Site</th>
+                    <th>Occurrence Time</th>
+                    <th style="width: 25%;">Failure Details</th>
+                    <th>Temp Applied</th>
+                    <th>Perm Required</th>
+                    <th>Assigned Tech</th>
+                    <th>Status</th>
+                    <th class="hide-print">Status Modifier</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for issue in issues %}
+                    <tr>
+                        <td style="font-weight: 700; color: var(--text-primary);">
+                            <a href="{% url 'vehicle_detail' issue.vehicle.id %}" style="text-decoration: none; color: inherit;">
+                                {{ issue.vehicle.name }}
+                            </a>
+                        </td>
+                        <td style="font-size: 0.8rem;">{{ issue.vehicle.site.name }}</td>
+                        <td style="white-space: nowrap; font-size: 0.8rem;">{{ issue.issue_date_time|date:"Y-m-d H:i" }}</td>
+                        <td style="font-size: 0.8rem; line-height: 1.35; max-width: 240px; word-wrap: break-word; white-space: normal;">
+                            {{ issue.problem_details }}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if issue.temp_solution_applied %}
+                                <span style="color: var(--accent-green); font-weight: bold; font-size: 1.1rem;">&bull;</span> Yes
+                            {% else %}
+                                <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if issue.permanent_solution_required %}
+                                <span style="color: var(--accent-red); font-weight: bold; font-size: 1.1rem;">&bull;</span> Yes
+                            {% else %}
+                                <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if issue.assigned_to %}
+                                <span class="flex items-center gap-1" style="font-size: 0.8rem;">
+                                    <i data-lucide="user" style="width: 12px; height: 12px; color: var(--text-muted);"></i>
+                                    {{ issue.assigned_to.username }}
+                                </span>
+                            {% else %}
+                                <span style="color: var(--text-muted); font-style: italic; font-size: 0.8rem;">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if issue.permanent_solution_status == 'pending' %}
+                                <span class="badge badge-status-pending">Pending</span>
+                            {% elif issue.permanent_solution_status == 'in_progress' %}
+                                <span class="badge badge-status-in_progress">In Progress</span>
+                            {% elif issue.permanent_solution_status == 'working' %}
+                                <span class="badge badge-status-working">Working</span>
+                            {% elif issue.permanent_solution_status == 'on_hold' %}
+                                <span class="badge badge-status-on_hold">On Hold</span>
+                            {% elif issue.permanent_solution_status == 'completed' %}
+                                <span class="badge badge-status-completed">Completed</span>
+                            {% endif %}
+                        </td>
+                        <td class="hide-print">
+                            <div style="display: flex; gap: 0.35rem; align-items: center;">
+                                <button type="button" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;" onclick="openUpdateModal('{{ issue.id }}', '{{ issue.vehicle.name|escapejs }}', '{{ issue.permanent_solution_status|escapejs }}', '{{ issue.assigned_to.id|default:'' }}', {% if issue.temp_solution_applied %}true{% else %}false{% endif %}, {% if issue.permanent_solution_required %}true{% else %}false{% endif %})">
+                                    <i data-lucide="edit" style="width: 12px; height: 12px;"></i>
+                                    Edit
+                                </button>
+                                {% if user.profile.role != 'technician' %}
+                                <form method="post" action="{% url 'delete_device_issue' issue.id %}" onsubmit="return confirm('WARNING: Are you sure you want to permanently delete this device issue log for {{ issue.vehicle.name }}? This action cannot be undone.');" style="margin: 0;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{% url 'device_issues' %}?limit={{ limit }}&start_date={{ start_date|default:'' }}&end_date={{ end_date|default:'' }}">
+                                    <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                                        Delete
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="glass-panel text-center" style="padding: 3rem 1.5rem; border: none;">
+            <i data-lucide="shield-check" style="width: 2.5rem; height: 2.5rem; color: var(--accent-green); margin-bottom: 0.75rem; display: block; margin-left: auto; margin-right: auto;"></i>
+            <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem;">No issue logs found</h3>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">Adjust your filter bounds or select a different site filter context.</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Update Issue Status Modal -->
+<div class="modal-overlay" id="update-issue-modal-overlay">
+    <div class="modal" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modal-title">Update Issue Status</h3>
+            <button class="modal-close" onclick="closeUpdateModal()">&times;</button>
+        </div>
+        <form id="update-issue-form" method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'device_issues' %}?limit={{ limit }}&start_date={{ start_date|default:'' }}&end_date={{ end_date|default:'' }}">
+            
+            <div class="form-group">
+                <label for="modal-status">Status</label>
+                <select name="permanent_solution_status" id="modal-status" class="form-control" required>
+                    {% for val, label in status_choices %}
+                        <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {% if user.profile.role != 'technician' %}
+            <div class="form-group">
+                <label for="modal-assigned-to">Assign Technician</label>
+                <select name="assigned_to" id="modal-assigned-to" class="form-control">
+                    <option value="">-- Unassigned --</option>
+                    {% for tech in technicians %}
+                        <option value="{{ tech.id }}">{{ tech.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; margin-bottom: 1.5rem;">
+                <label class="flex items-center gap-2" style="font-size: 0.85rem; font-weight: normal; cursor: pointer; text-transform: none; letter-spacing: normal;">
+                    <input type="checkbox" name="temp_solution_applied" id="modal-temp-applied">
+                    Temporary solution applied
+                </label>
+                <label class="flex items-center gap-2" style="font-size: 0.85rem; font-weight: normal; cursor: pointer; text-transform: none; letter-spacing: normal;">
+                    <input type="checkbox" name="permanent_solution_required" id="modal-permanent-required">
+                    Permanent solution required
+                </label>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeUpdateModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // CSV Exporter
+    function exportTableToCSV(filename) {
+        const csv = [];
+        const rows = document.querySelectorAll("table.logs-table tr");
+        
+        for (let i = 0; i < rows.length; i++) {
+            const row = [], cols = rows[i].querySelectorAll("td, th");
+            
+            // Skip header if empty or match indices
+            if (cols.length === 0) continue;
+            
+            for (let j = 0; j < cols.length; j++) {
+                // Skip the status modifier control column in CSV export
+                if (cols[j].classList.contains("hide-print")) continue;
+                
+                let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, " ").replace(/(\s\s+)/g, ' ').trim();
+                data = data.replace(/"/g, '""');
+                
+                // If it contains a status select or assign select inside, use the text values
+                const selectEl = cols[j].querySelector("select");
+                if (selectEl) {
+                    data = selectEl.options[selectEl.selectedIndex].text;
+                }
+                
+                row.push('"' + data + '"');
+            }
+            csv.push(row.join(","));
+        }
+
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csv.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // PDF Exporter
+    function exportTableToPDF() {
+        const printWindow = window.open('', '_blank');
+        const originalTable = document.querySelector("table.logs-table");
+        
+        if (!originalTable) return;
+        
+        const activeSiteName = "{% if site %}{{ site.name }}{% else %}All Sites{% endif %}";
+        const dateRangeStr = "{% if start_date or end_date %}Period: {{ start_date|default:'All' }} to {{ end_date|default:'All' }}{% else %}All Time{% endif %}";
+        
+        // Clone table so we can modify content for print without altering live page
+        const clonedTable = originalTable.cloneNode(true);
+        
+        // Convert status dropdown selects into static text
+        clonedTable.querySelectorAll("td").forEach(td => {
+            const form = td.querySelector("form");
+            if (form) {
+                const selectVal = form.querySelector('select[name="permanent_solution_status"]');
+                if (selectVal) {
+                    const textVal = selectVal.options[selectVal.selectedIndex].text;
+                    const span = document.createElement('span');
+                    span.innerText = textVal;
+                    td.appendChild(span);
+                }
+                form.remove();
+            }
+        });
+        
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Device Issue Track Logs Report</title>
+                <style>
+                    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 30px; color: #334155; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                    th, td { border: 1px solid #cbd5e1; padding: 10px 12px; text-align: left; font-size: 11px; }
+                    th { background-color: #f8fafc; font-weight: 600; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; }
+                    .badge { border-radius: 4px; padding: 2px 6px; font-weight: 600; text-transform: uppercase; font-size: 9px; display: inline-block; }
+                    .badge-status-pending { background-color: rgba(249, 115, 22, 0.1); color: rgb(249, 115, 22); }
+                    .badge-status-in_progress { background-color: rgba(59, 130, 246, 0.1); color: rgb(59, 130, 246); }
+                    .badge-status-working { background-color: rgba(139, 92, 246, 0.1); color: rgb(139, 92, 246); }
+                    .badge-status-on_hold { background-color: rgba(100, 116, 139, 0.1); color: rgb(100, 116, 139); }
+                    .badge-status-completed { background-color: rgba(16, 185, 129, 0.1); color: rgb(16, 185, 129); }
+                    .hide-print { display: none !important; }
+                </style>
+            </head>
+            <body>
+                <!-- Professional Branded Header -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 25px;">
+                    <div>
+                        <h1 style="margin: 0; font-size: 24px; color: #dc2626; font-weight: 700;">GOTILO FLEET</h1>
+                        <span style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Terminal Management System</span>
+                    </div>
+                    <div style="text-align: right; font-size: 11px; color: #334155; line-height: 1.4;">
+                        <h3 style="margin: 0 0 5px; font-size: 14px; color: #0f172a; font-weight: 700;">Device Issue Track Logs</h3>
+                        <div><strong>Site Context:</strong> ${activeSiteName}</div>
+                        <div><strong>Date Range:</strong> ${dateRangeStr}</div>
+                        <div style="margin-top: 5px; font-size: 9px; color: #64748b;">Printed on: ${new Date().toLocaleString()}</div>
+                    </div>
+                </div>
+
+                ${clonedTable.outerHTML}
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        window.close();
+                    }
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    }
+
+    // Modal Helpers
+    function openUpdateModal(issueId, vehicleName, status, assignedToId, tempApplied, permRequired) {
+        const modal = document.getElementById('update-issue-modal-overlay');
+        const form = document.getElementById('update-issue-form');
+        const title = document.getElementById('modal-title');
+        
+        form.action = `/issues/${issueId}/update/`;
+        title.innerText = "Update Issue: " + vehicleName;
+        
+        document.getElementById('modal-status').value = status;
+        const assignSelect = document.getElementById('modal-assigned-to');
+        if (assignSelect) {
+            assignSelect.value = assignedToId;
+        }
+        document.getElementById('modal-temp-applied').checked = tempApplied;
+        document.getElementById('modal-permanent-required').checked = permRequired;
+        
+        modal.classList.add('active');
+        lucide.createIcons();
+    }
+
+    function closeUpdateModal() {
+        document.getElementById('update-issue-modal-overlay').classList.remove('active');
+    }
+</script>
+{% endblock %}

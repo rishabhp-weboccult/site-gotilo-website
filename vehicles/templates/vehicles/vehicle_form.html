@@ -240,6 +240,26 @@
                     <input type="text" id="box-number" name="box_number" class="form-control" placeholder="e.g. BOX-8829, Serial-01" value="{{ vehicle.box_number|default:'' }}">
                 </div>
             </div>
+
+            <div class="form-row" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label for="driver-name">Driver Name</label>
+                    <input type="text" id="driver-name" name="driver_name" class="form-control" placeholder="e.g. John Doe" value="{{ vehicle.driver_name|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label for="driver-number">Driver Phone/Number</label>
+                    <input type="text" id="driver-number" name="driver_number" class="form-control" placeholder="e.g. +1 (555) 0199" value="{{ vehicle.driver_number|default:'' }}">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="availability-status">Availability Status</label>
+                <select id="availability-status" name="availability_status" class="form-control">
+                    {% for value, label in availability_choices %}
+                        <option value="{{ value }}" {% if vehicle.availability_status == value or not vehicle and value == 'available' %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
 
         <!-- Section 2: On-board controller details -->

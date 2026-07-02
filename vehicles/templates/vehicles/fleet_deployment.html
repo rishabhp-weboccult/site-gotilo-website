@@ -1,0 +1,137 @@
+{% extends 'vehicles/base.html' %}
+
+{% block title %}Active Fleet | {{ site.name }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+            <a href="{% url 'site_detail' site.id %}" style="color: var(--primary); text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+                <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                Back to {{ site.name }}
+            </a>
+        </div>
+        <h1 style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.025em;">
+            Active Fleet Deployment
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+            Monitor live telemetry controller stats and video connection nodes at <strong>{{ site.name }}</strong>.
+        </p>
+    </div>
+    {% if user.profile.role != 'technician' %}
+    <a href="{% url 'add_vehicle' site.id %}" class="btn btn-primary">
+        <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+        Add Vehicle
+    </a>
+    {% endif %}
+</div>
+
+<!-- Vehicles grid -->
+{% if vehicles %}
+<div class="vehicles-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+    {% for vehicle in vehicles %}
+    <div class="vehicle-card" style="background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; transition: var(--transition); display: flex; flex-direction: column; gap: 0.75rem;">
+        <div>
+            <!-- Card Header with Icon and Type -->
+            <div class="vehicle-card-top" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div class="vehicle-icon-box" style="background-color: #ffffff; border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 6px;">
+                        <svg class="vehicle-svg {{ vehicle.vehicle_type }}" viewBox="0 0 64 64" style="width: 2.25rem; height: 2.25rem;"><use href="#icon-{{ vehicle.vehicle_type }}"></use></svg>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0;">{{ vehicle.name }}</h3>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">
+                            {% if vehicle.vehicle_type == 'reachstacker' %}
+                                Reachstacker
+                            {% elif vehicle.vehicle_type == 'forklift' %}
+                                Forklift
+                            {% else %}
+                                Side Shifter
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1" style="font-size: 0.75rem; color: var(--text-secondary);">
+                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: {% if vehicle.device_status == 'Active' %}var(--accent-green){% else %}var(--accent-red){% endif %};"></span>
+                    <span>Controller: {{ vehicle.device_status|default:"Active" }}</span>
+                </div>
+            </div>
+
+            <!-- Driver & Availability Status Section -->
+            <div style="margin: 0.75rem 0; padding: 0.75rem; background-color: rgba(15, 23, 42, 0.03); border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.8rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.025em;">Driver Name</span>
+                    <span style="font-weight: 600; color: var(--text-primary);">{{ vehicle.driver_name|default:"Not Assigned" }}</span>
+                </div>
+                {% if vehicle.driver_number %}
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.025em;">Driver Phone</span>
+                    <span style="font-family: monospace; color: var(--text-secondary); font-weight: 500;">{{ vehicle.driver_number }}</span>
+                </div>
+                {% endif %}
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(51, 65, 85, 0.1); padding-top: 0.5rem; margin-top: 0.5rem;">
+                    <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.025em;">Status</span>
+                    <div>
+                        {% if vehicle.availability_status == 'available' %}
+                            <span class="badge badge-green">Available</span>
+                        {% elif vehicle.availability_status == 'busy' %}
+                            <span class="badge badge-orange">Busy</span>
+                        {% elif vehicle.availability_status == 'break' %}
+                            <span class="badge badge-purple">On Break</span>
+                        {% elif vehicle.availability_status == 'maintenance' %}
+                            <span class="badge badge-red">Under Maintenance</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem; gap: 0.5rem;">
+                    <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.025em;">Update Status</span>
+                    <form action="{% url 'update_vehicle_status' vehicle.id %}" method="post" style="margin: 0;">
+                        {% csrf_token %}
+                        <!-- Redirect back to fleet page on update -->
+                        <input type="hidden" name="next" value="{% url 'site_fleet_deployment' site.id %}">
+                        <select name="availability_status" onchange="this.form.submit()" class="form-control" style="padding: 0.2rem 1.5rem 0.2rem 0.4rem; font-size: 0.75rem; width: auto; height: auto; min-width: 120px; cursor: pointer;">
+                            {% for value, label in availability_choices %}
+                                <option value="{{ value }}" {% if vehicle.availability_status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Vehicle actions -->
+        <div class="vehicle-actions" style="margin-top: auto; padding-top: 0.5rem; display: flex; justify-content: flex-end; gap: 0.4rem; border-top: 1px solid var(--border-color);">
+            <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-secondary" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                <i data-lucide="eye" style="width: 12px; height: 12px;"></i>
+                View Details
+            </a>
+            {% if user.profile.role != 'technician' %}
+            <a href="{% url 'edit_vehicle' vehicle.id %}" class="btn btn-secondary" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;">
+                <i data-lucide="edit" style="width: 12px; height: 12px;"></i>
+                Edit
+            </a>
+            <form action="{% url 'delete_vehicle' vehicle.id %}" method="post" onsubmit="return confirm('Are you sure you want to delete vehicle \'{{ vehicle.name }}\'?');" style="display: inline; margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;">
+                    <i data-lucide="trash" style="width: 12px; height: 12px;"></i>
+                    Delete
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-panel text-center" style="padding: 3rem 1.5rem;">
+    <i data-lucide="truck" style="width: 2rem; height: 2rem; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
+    <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem;">No vehicles deployed</h3>
+    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">Start registering vehicle hardware telemetry and cameras at this location.</p>
+    {% if user.profile.role != 'technician' %}
+    <a href="{% url 'add_vehicle' site.id %}" class="btn btn-primary">Add First Vehicle</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

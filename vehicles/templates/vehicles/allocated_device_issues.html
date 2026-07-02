@@ -1,0 +1,239 @@
+{% extends 'vehicles/base.html' %}
+
+{% block title %}Allocated Device Issues | Gotilo Container Fleet{% endblock %}
+
+{% block extra_css %}
+<style>
+    .issue-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+        transition: var(--transition);
+        position: relative;
+    }
+
+    .issue-card:hover {
+        border-color: var(--border-hover);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .issue-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 1px solid rgba(51, 65, 85, 0.1);
+        padding-bottom: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .issue-title h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .issue-title p {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin: 0.15rem 0 0;
+    }
+
+    .issue-datetime {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .issue-details {
+        font-size: 0.85rem;
+        line-height: 1.4;
+        color: var(--text-secondary);
+        background-color: rgba(15, 23, 42, 0.02);
+        padding: 0.75rem;
+        border-radius: 6px;
+        border-left: 3px solid var(--primary);
+        margin-bottom: 0.75rem;
+    }
+
+    .solution-checks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .check-item {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-weight: 500;
+    }
+
+    .check-item.success {
+        color: var(--accent-green);
+    }
+
+    .check-item.danger {
+        color: var(--accent-red);
+    }
+
+    .check-item.muted {
+        color: var(--text-muted);
+    }
+
+    /* Issue status update form inside the card */
+    .issue-update-form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid rgba(51, 65, 85, 0.1);
+        padding-top: 0.75rem;
+        margin-top: 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .issue-update-form select {
+        padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        width: auto;
+        height: auto;
+        min-width: 130px;
+    }
+
+    .badge-status-pending { background-color: rgba(249, 115, 22, 0.1); color: var(--accent-orange); border: 1px solid rgba(249, 115, 22, 0.15); }
+    .badge-status-in_progress { background-color: rgba(59, 130, 246, 0.1); color: var(--accent-cyan); border: 1px solid rgba(59, 130, 246, 0.15); }
+    .badge-status-working { background-color: rgba(139, 92, 246, 0.1); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.15); }
+    .badge-status-on_hold { background-color: rgba(100, 116, 139, 0.1); color: var(--text-muted); border: 1px solid rgba(100, 116, 139, 0.15); }
+    .badge-status-completed { background-color: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.15); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.025em;">
+            Allocated Device Issues
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+            Review and resolve malfunctions currently assigned to your workload context.
+        </p>
+    </div>
+</div>
+
+<div>
+    <div style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <h2 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); border-left: 3px solid var(--accent-purple); padding-left: 0.5rem; margin: 0;">
+            Issues Allocated to You ({{ allocated_issues.count }})
+        </h2>
+        <form method="get" action="" style="margin: 0;">
+            <select name="limit" onchange="this.form.submit()" class="form-control" style="width: auto; padding: 0.2rem 1.75rem 0.2rem 0.5rem; font-size: 0.8rem; height: auto; cursor: pointer;">
+                <option value="10" {% if limit == '10' or not limit %}selected{% endif %}>Last 10 Issues</option>
+                <option value="50" {% if limit == '50' %}selected{% endif %}>Last 50 Issues</option>
+                <option value="100" {% if limit == '100' %}selected{% endif %}>Last 100 Issues</option>
+            </select>
+        </form>
+    </div>
+
+    {% if allocated_issues %}
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            {% for issue in allocated_issues %}
+                <div class="issue-card" style="border-left: 3px solid var(--accent-purple);">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <h3>{{ issue.vehicle.name }}</h3>
+                            <p>{{ issue.vehicle.site.name }} &bull; {{ issue.vehicle.get_vehicle_type_display }}</p>
+                        </div>
+                        <div>
+                            {% if issue.permanent_solution_status == 'pending' %}
+                                <span class="badge badge-status-pending">Pending</span>
+                            {% elif issue.permanent_solution_status == 'in_progress' %}
+                                <span class="badge badge-status-in_progress">In Progress</span>
+                            {% elif issue.permanent_solution_status == 'working' %}
+                                <span class="badge badge-status-working">Working On</span>
+                            {% elif issue.permanent_solution_status == 'on_hold' %}
+                                <span class="badge badge-status-on_hold">On Hold</span>
+                            {% elif issue.permanent_solution_status == 'completed' %}
+                                <span class="badge badge-status-completed">Completed</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="issue-datetime">
+                        <i data-lucide="calendar" style="width: 14px; height: 14px;"></i>
+                        <span>Occurred: {{ issue.issue_date_time|date:"M d, Y &bull; H:i" }}</span>
+                    </div>
+
+                    <div class="issue-details">
+                        {{ issue.problem_details }}
+                    </div>
+
+                    <div class="solution-checks">
+                        <span class="check-item {% if issue.temp_solution_applied %}success{% else %}muted{% endif %}">
+                            <i data-lucide="{% if issue.temp_solution_applied %}check-circle{% else %}circle{% endif %}" style="width: 14px; height: 14px;"></i>
+                            Temp Solution Applied
+                        </span>
+                        <span class="check-item {% if issue.permanent_solution_required %}danger{% else %}muted{% endif %}">
+                            <i data-lucide="{% if issue.permanent_solution_required %}alert-triangle{% else %}minus-circle{% endif %}" style="width: 14px; height: 14px;"></i>
+                            Permanent Solution Required
+                        </span>
+                    </div>
+
+                    <!-- Status modification panel directly inside card -->
+                    <form method="post" action="{% url 'update_issue_status' issue.id %}" class="issue-update-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'allocated_device_issues' %}">
+                        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; flex-grow: 1;">
+                            <div style="display: flex; gap: 0.25rem; align-items: center;">
+                                <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Status:</label>
+                                <select name="permanent_solution_status" onchange="this.form.submit()" class="form-control" style="width: auto; padding: 0.2rem 1.5rem 0.2rem 0.4rem; font-size: 0.75rem; height: auto; cursor: pointer;">
+                                    {% for val, label in status_choices %}
+                                        <option value="{{ val }}" {% if issue.permanent_solution_status == val %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            {% if user.profile.role != 'technician' %}
+                            <div style="display: flex; gap: 0.25rem; align-items: center;">
+                                <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Assign To:</label>
+                                <select name="assigned_to" onchange="this.form.submit()" class="form-control" style="width: auto; padding: 0.2rem 1.5rem 0.2rem 0.4rem; font-size: 0.75rem; height: auto; cursor: pointer;">
+                                    <option value="">-- Unassigned --</option>
+                                    {% for tech in technicians %}
+                                        <option value="{{ tech.id }}" {% if issue.assigned_to.id == tech.id %}selected{% endif %}>{{ tech.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <label class="flex items-center gap-1" style="font-size: 0.75rem; color: var(--text-secondary); cursor: pointer;">
+                                <input type="checkbox" name="temp_solution_applied" {% if issue.temp_solution_applied %}checked{% endif %} onchange="this.form.submit()">
+                                Temp Applied
+                            </label>
+                            <label class="flex items-center gap-1" style="font-size: 0.75rem; color: var(--text-secondary); cursor: pointer;">
+                                <input type="checkbox" name="permanent_solution_required" {% if issue.permanent_solution_required %}checked{% endif %} onchange="this.form.submit()">
+                                Perm Required
+                            </label>
+                        </div>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="glass-panel text-center" style="padding: 3rem 1.5rem;">
+            <i data-lucide="check-circle" style="width: 2.5rem; height: 2.5rem; color: var(--accent-green); margin-bottom: 0.75rem; display: block; margin-left: auto; margin-right: auto;"></i>
+            <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem;">No Allocated Issues</h3>
+            <p style="color: var(--text-secondary); font-size: 0.85rem;">You are currently all caught up with your assigned hardware tickets.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

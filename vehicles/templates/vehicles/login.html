@@ -1,0 +1,107 @@
+{% extends 'vehicles/base.html' %}
+
+{% block title %}Login | Gotilo Container Fleet{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 16rem);
+    }
+
+    .login-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 2.5rem 2rem;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .login-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.025em;
+    }
+
+    .login-header p {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+
+    .demo-credentials {
+        background-color: rgba(15, 23, 42, 0.03);
+        border: 1px dashed var(--border-color);
+        border-radius: 6px;
+        padding: 0.75rem;
+        margin-top: 1.5rem;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .demo-credentials h4 {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .demo-credentials code {
+        font-family: monospace;
+        background: #ffffff;
+        padding: 0.1rem 0.25rem;
+        border-radius: 3px;
+        border: 1px solid var(--border-color);
+    }
+</style>
+{% endblock %}
+
+{% block unauth_content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <span style="color: var(--primary); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; background: rgba(220, 38, 38, 0.08); padding: 0.75rem; border-radius: 50%;">
+                <i data-lucide="shield-alert" style="width: 2rem; height: 2rem;"></i>
+            </span>
+            <h2>Sign in to Gotilo</h2>
+            <p>Access terminal sites, telemetry data, and issue tracker</p>
+        </div>
+
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+            
+            <div class="form-group">
+                <label for="id_username">Username</label>
+                <input type="text" name="username" id="id_username" class="form-control" placeholder="Enter username" required autofocus>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="id_password">Password</label>
+                <input type="password" name="password" id="id_password" class="form-control" placeholder="Enter password" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.6rem 1rem; font-weight: 600; font-size: 0.9rem;">
+                <i data-lucide="log-in" style="width: 16px; height: 16px;"></i>
+                Sign In
+            </button>
+        </form>
+
+
+    </div>
+</div>
+{% endblock %}

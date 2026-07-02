@@ -1,0 +1,322 @@
+{% extends 'vehicles/base.html' %}
+{% load static %}
+
+{% block title %}Vehicle Management | Gotilo Container Fleet{% endblock %}
+
+{% block extra_css %}
+<style>
+    .vehicle-header-block {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .vehicle-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.015);
+    }
+
+    .vehicle-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px -8px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08) !important;
+        border-color: var(--border-hover) !important;
+    }
+
+    .vehicle-card .vehicle-card-img-wrapper svg {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .vehicle-card:hover .vehicle-card-img-wrapper svg {
+        transform: scale(1.12) rotate(2deg);
+    }
+
+    /* Modal Form dialog */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal {
+        background-color: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        width: 100%;
+        max-width: 450px;
+        padding: 2rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        transform: translateY(-10px);
+        transition: transform 0.2s ease;
+    }
+
+    .modal-overlay.active .modal {
+        transform: translateY(0);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.25rem;
+        cursor: pointer;
+    }
+
+    .modal-close:hover {
+        color: var(--text-primary);
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1.25rem;
+        border-top: 1px solid var(--border-color);
+        padding-top: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vehicle-header-block">
+    <div>
+        <h1 style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.025em; margin: 0 0 0.25rem;">
+            Vehicle Management
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+            Monitor live telemetry controller stats, video connection nodes, and driver assignments across all terminals.
+        </p>
+    </div>
+    {% if user.profile.role != 'technician' %}
+    <button class="btn btn-primary" id="open-add-vehicle-btn">
+        <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
+        Add New Vehicle
+    </button>
+    {% endif %}
+</div>
+
+<!-- Vehicles grid -->
+{% if vehicles %}
+<div class="vehicles-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.75rem; margin-top: 1rem;">
+    {% for vehicle in vehicles %}
+    <div class="vehicle-card">
+        <!-- Top Icon Header with type-colored gradient -->
+        <div class="vehicle-card-img-wrapper" style="position: relative; height: 120px; display: flex; align-items: center; justify-content: center; overflow: hidden;
+            {% if vehicle.vehicle_type == 'reachstacker' %}
+                background: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);
+            {% elif vehicle.vehicle_type == 'forklift' %}
+                background: linear-gradient(135deg, #f97316 0%, #dc2626 100%);
+            {% else %}
+                background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+            {% endif %}">
+            
+            <svg class="vehicle-svg {{ vehicle.vehicle_type }}" viewBox="0 0 64 64" style="width: 3.5rem; height: 3.5rem; color: #ffffff; fill: none; stroke: currentColor; filter: drop-shadow(0 4px 6px rgba(15, 23, 42, 0.15));"><use href="#icon-{{ vehicle.vehicle_type }}"></use></svg>
+            
+            <!-- Type Badge inside overlay (bottom-left) -->
+            <div style="position: absolute; bottom: 0.75rem; left: 0.75rem; color: #ffffff;">
+                <span class="badge" style="background-color: rgba(255, 255, 255, 0.2); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); font-size: 0.65rem; padding: 0.2rem 0.5rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; backdrop-filter: blur(4px);">
+                    {% if vehicle.vehicle_type == 'reachstacker' %}
+                        Reachstacker
+                    {% elif vehicle.vehicle_type == 'forklift' %}
+                        Forklift
+                    {% else %}
+                        Side Shifter
+                    {% endif %}
+                </span>
+            </div>
+            
+            <!-- Controller status inside overlay (top-right) -->
+            <div style="position: absolute; top: 0.75rem; right: 0.75rem; display: flex; align-items: center; gap: 0.35rem; font-size: 0.7rem; color: #ffffff; background-color: rgba(15, 23, 42, 0.3); backdrop-filter: blur(4px); padding: 0.25rem 0.5rem; border-radius: 20px; font-weight: 500; border: 1px solid rgba(255, 255, 255, 0.15);">
+                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: {% if vehicle.device_status == 'Active' %}var(--accent-green){% else %}var(--accent-red){% endif %};"></span>
+                <span>Controller: {{ vehicle.device_status|default:"Active" }}</span>
+            </div>
+        </div>
+
+        <!-- Body Details -->
+        <div style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; flex-grow: 1;">
+            <div>
+                <!-- Title & Site location -->
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin: 0;">{{ vehicle.name }}</h3>
+                </div>
+                <div style="font-size: 0.75rem; display: flex; align-items: center; gap: 0.25rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                    <i data-lucide="map-pin" style="width: 12px; height: 12px; color: var(--primary);"></i>
+                    <a href="{% url 'site_detail' vehicle.site.id %}" style="font-weight: 600; color: var(--primary); text-decoration: none; hover: underline;">{{ vehicle.site.name }}</a>
+                </div>
+            </div>
+
+            <!-- Specs details -->
+            <div style="font-size: 0.75rem; color: var(--text-secondary); font-family: monospace; background: rgba(15, 23, 42, 0.02); padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; margin-top: 0.15rem;">
+                <span>Box: <strong>{{ vehicle.box_number|default:"—" }}</strong></span>
+                <span>Serial: <strong>{{ vehicle.vehicle_number|default:"—" }}</strong></span>
+            </div>
+
+            <!-- Driver & Availability Status Section -->
+            <div style="padding: 0.75rem; background-color: rgba(15, 23, 42, 0.03); border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.15rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.025em;">Driver Assigned</span>
+                    <span style="font-weight: 600; color: var(--text-primary);">{{ vehicle.driver_name|default:"Not Assigned" }}</span>
+                </div>
+                {% if vehicle.driver_number %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.025em;">Contact Phone</span>
+                    <span style="font-family: monospace; color: var(--text-secondary); font-weight: 500;">{{ vehicle.driver_number }}</span>
+                </div>
+                {% endif %}
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(51, 65, 85, 0.1); padding-top: 0.5rem; margin-top: 0.25rem;">
+                    <span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.025em;">Availability</span>
+                    <div>
+                        {% if vehicle.availability_status == 'available' %}
+                            <span class="badge badge-green">Available</span>
+                        {% elif vehicle.availability_status == 'busy' %}
+                            <span class="badge badge-orange">Busy</span>
+                        {% elif vehicle.availability_status == 'break' %}
+                            <span class="badge badge-purple">On Break</span>
+                        {% elif vehicle.availability_status == 'maintenance' %}
+                            <span class="badge badge-red">Under Maintenance</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicle actions -->
+            <div class="vehicle-actions" style="margin-top: auto; padding-top: 0.75rem; display: flex; justify-content: flex-end; gap: 0.4rem; border-top: 1px solid var(--border-color);">
+                <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-secondary" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                    <i data-lucide="eye" style="width: 12px; height: 12px;"></i>
+                    View Details
+                </a>
+                {% if user.profile.role != 'technician' %}
+                <a href="{% url 'edit_vehicle' vehicle.id %}" class="btn btn-secondary" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                    <i data-lucide="edit" style="width: 12px; height: 12px;"></i>
+                    Edit
+                </a>
+                <form action="{% url 'delete_vehicle' vehicle.id %}" method="post" onsubmit="return confirm('Are you sure you want to delete vehicle \'{{ vehicle.name }}\'?');" style="display: inline; margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                        <i data-lucide="trash" style="width: 12px; height: 12px;"></i>
+                        Delete
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-panel text-center" style="padding: 3rem 1.5rem; margin-top: 1.5rem;">
+    <i data-lucide="truck" style="width: 2.5rem; height: 2.5rem; color: var(--text-muted); margin-bottom: 0.75rem; display: block; margin-left: auto; margin-right: auto;"></i>
+    <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem;">No vehicles deployed</h3>
+    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">Start registering vehicle hardware telemetry and cameras.</p>
+</div>
+{% endif %}
+
+{% if user.profile.role != 'technician' %}
+<!-- Site Selector Modal for Adding Vehicle -->
+<div class="modal-overlay" id="add-vehicle-modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Select Terminal Site</h3>
+            <button class="modal-close" id="close-add-vehicle-btn">&times;</button>
+        </div>
+        <form id="add-vehicle-form" onsubmit="event.preventDefault(); proceedToAddVehicle();">
+            <div class="form-group">
+                <label for="modal-site-select">Target Terminal Site *</label>
+                <select id="modal-site-select" class="form-control" required>
+                    <option value="" disabled selected>Select site locations...</option>
+                    {% for s in all_sites %}
+                        <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancel-add-vehicle-btn">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+                    Proceed
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const modalOverlay = document.getElementById('add-vehicle-modal-overlay');
+        const openModalBtn = document.getElementById('open-add-vehicle-btn');
+        const closeModalBtn = document.getElementById('close-add-vehicle-btn');
+        const cancelModalBtn = document.getElementById('cancel-add-vehicle-btn');
+        
+        if (openModalBtn && modalOverlay) {
+            openModalBtn.addEventListener('click', () => {
+                modalOverlay.style.display = 'flex';
+                setTimeout(() => modalOverlay.classList.add('active'), 10);
+            });
+        }
+        
+        const closeModal = () => {
+            if (modalOverlay) {
+                modalOverlay.classList.remove('active');
+                setTimeout(() => modalOverlay.style.display = 'none', 200);
+            }
+        };
+
+        if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+        if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+        }
+    });
+
+    function proceedToAddVehicle() {
+        const siteId = document.getElementById('modal-site-select').value;
+        if (siteId) {
+            window.location.href = `/site/${siteId}/vehicle/add/`;
+        }
+    }
+</script>
+{% endblock %}

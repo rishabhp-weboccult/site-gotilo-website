@@ -50,9 +50,9 @@
 
     /* Site Stats */
     .site-stats-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        display: flex;
         gap: 0.75rem;
+        flex-wrap: wrap;
         margin-bottom: 2rem;
     }
 
@@ -64,7 +64,21 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        width: 100%;
+        max-width: 260px;
     }
+
+    @media (max-width: 576px) {
+        .site-stat-box {
+            max-width: 100%;
+        }
+    }
+
+    .badge-status-pending { background-color: rgba(249, 115, 22, 0.1); color: var(--accent-orange); border: 1px solid rgba(249, 115, 22, 0.15); }
+    .badge-status-in_progress { background-color: rgba(59, 130, 246, 0.1); color: var(--accent-cyan); border: 1px solid rgba(59, 130, 246, 0.15); }
+    .badge-status-working { background-color: rgba(139, 92, 246, 0.1); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.15); }
+    .badge-status-on_hold { background-color: rgba(100, 116, 139, 0.1); color: var(--text-muted); border: 1px solid rgba(100, 116, 139, 0.15); }
+    .badge-status-completed { background-color: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.15); }
 
     .site-stat-label {
         color: var(--text-muted);
@@ -367,10 +381,13 @@
     </div>
     
     <div class="action-group">
+        {% if user.profile.role != 'technician' %}
         <button class="btn btn-secondary" id="open-edit-site-modal">
             <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
             Edit Site
         </button>
+        {% endif %}
+        {% if user.profile.role == 'super_admin' %}
         <form action="{% url 'delete_site' site.id %}" method="post" onsubmit="return confirm('WARNING: Deleting this site will permanently remove all associated vehicles and camera configurations. Do you want to proceed?');">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">
@@ -378,169 +395,189 @@
                 Delete Site
             </button>
         </form>
+        {% endif %}
     </div>
 </div>
 
 <!-- Site Statistics Summary Box -->
 <div class="site-stats-strip">
-    <div class="site-stat-box">
-        <div class="site-stat-label">Total Fleet</div>
-        <div class="site-stat-val">{{ vehicles.count }}</div>
-    </div>
-    <div class="site-stat-box" style="border-left: 3px solid var(--reachstacker-color);">
-        <div class="site-stat-label">Reachstackers</div>
-        <div class="site-stat-val">
-            {% filter_by_type vehicles 'reachstacker' as rs_list %}
-            {{ rs_list|length }}
+    <div class="site-stat-box" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; justify-content: flex-start; min-height: 140px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div class="site-stat-label">Total Vehicles</div>
+            <div class="site-stat-val" style="margin: 0; font-size: 1.5rem;">{{ vehicles.count }}</div>
+        </div>
+        <!-- Sub-types mini table -->
+        <div style="width: 100%; border-top: 1px solid var(--border-color); padding-top: 0.5rem; margin-top: 0.25rem;">
+            <table style="width: 100%; font-size: 0.75rem; border-collapse: collapse;">
+                <tbody>
+                    <tr style="border-bottom: 1px solid rgba(15,23,42,0.03);">
+                        <td style="padding: 0.2rem 0; color: var(--text-muted); display: flex; align-items: center; gap: 0.25rem;">
+                            <i data-lucide="container" style="width: 12px; height: 12px; color: var(--accent-cyan);"></i>
+                            Reachstackers
+                        </td>
+                        <td style="padding: 0.2rem 0; text-align: right; font-weight: 700; color: var(--text-primary);">
+                            {% filter_by_type vehicles 'reachstacker' as rs_list %}
+                            {{ rs_list|length }}
+                        </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(15,23,42,0.03);">
+                        <td style="padding: 0.2rem 0; color: var(--text-muted); display: flex; align-items: center; gap: 0.25rem;">
+                            <i data-lucide="cog" style="width: 12px; height: 12px; color: var(--accent-orange);"></i>
+                            Forklifts
+                        </td>
+                        <td style="padding: 0.2rem 0; text-align: right; font-weight: 700; color: var(--text-primary);">
+                            {% filter_by_type vehicles 'forklift' as fl_list %}
+                            {{ fl_list|length }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.2rem 0; color: var(--text-muted); display: flex; align-items: center; gap: 0.25rem;">
+                            <i data-lucide="chevrons-left-right" style="width: 12px; height: 12px; color: var(--accent-purple);"></i>
+                            Side Shifters
+                        </td>
+                        <td style="padding: 0.2rem 0; text-align: right; font-weight: 700; color: var(--text-primary);">
+                            {% filter_by_type vehicles 'side_shifter' as ss_list %}
+                            {{ ss_list|length }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
-    <div class="site-stat-box" style="border-left: 3px solid var(--forklift-color);">
-        <div class="site-stat-label">Forklifts</div>
-        <div class="site-stat-val">
-            {% filter_by_type vehicles 'forklift' as fl_list %}
-            {{ fl_list|length }}
-        </div>
-    </div>
-    <div class="site-stat-box" style="border-left: 3px solid var(--sideshifter-color);">
-        <div class="site-stat-label">Side Shifters</div>
-        <div class="site-stat-val">
-            {% filter_by_type vehicles 'side_shifter' as ss_list %}
-            {{ ss_list|length }}
-        </div>
-    </div>
-    <div class="site-stat-box">
-        <div class="site-stat-label">IP Cameras</div>
-        <div class="site-stat-val">
-            {% get_cameras_count vehicles as total_site_cams %}
-            {{ total_site_cams }}
-        </div>
-    </div>
-</div>
-
-<!-- Vehicles grid -->
-<div>
-    <div class="vehicles-section-header">
-        <h2 class="section-title" style="border-left: 3px solid var(--primary); padding-left: 0.5rem; font-size: 1.1rem; font-weight: 600;">
-            Active Fleet Deployment
-        </h2>
-        <a href="{% url 'add_vehicle' site.id %}" class="btn btn-primary">
-            <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+    <div class="site-stat-box" style="display: flex; flex-direction: column; gap: 0.4rem; justify-content: center; background-color: rgba(15, 23, 42, 0.02); border-style: dashed;">
+        {% if user.profile.role != 'technician' %}
+        <a href="{% url 'add_vehicle' site.id %}" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; font-weight: 600;">
+            <i data-lucide="plus" style="width: 12px; height: 12px;"></i>
             Add Vehicle
+        </a>
+        {% endif %}
+        <a href="{% url 'site_fleet_deployment' site.id %}" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; font-weight: 600;">
+            <i data-lucide="eye" style="width: 12px; height: 12px;"></i>
+            View Vehicles
         </a>
     </div>
 
-    {% if vehicles %}
-    <div class="vehicles-grid">
-        {% for vehicle in vehicles %}
-        <div class="vehicle-card">
-            <div>
-                <!-- Card Header with Icon and Type -->
-                <div class="vehicle-card-top">
-                    <div class="vehicle-icon-box">
-                        <svg class="vehicle-svg {{ vehicle.vehicle_type }}" viewBox="0 0 64 64"><use href="#icon-{{ vehicle.vehicle_type }}"></use></svg>
-                    </div>
-                    <div class="vehicle-meta-info">
-                        <div class="vehicle-title">
-                            <h3>{{ vehicle.name }}</h3>
-                            {% if vehicle.vehicle_type == 'reachstacker' %}
-                                <span class="badge badge-cyan">Reachstacker</span>
-                            {% elif vehicle.vehicle_type == 'forklift' %}
-                                <span class="badge badge-orange">Forklift</span>
-                            {% elif vehicle.vehicle_type == 'side_shifter' %}
-                                <span class="badge badge-purple">Side Shifter</span>
-                            {% endif %}
-                        </div>
-                        <div class="flex items-center gap-1" style="margin-top: 0.25rem; font-size: 0.75rem; color: var(--text-secondary);">
-                            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: {% if vehicle.device_status == 'Active' %}var(--accent-green){% else %}var(--accent-red){% endif %};"></span>
-                            <span>{{ vehicle.device_status|default:"Active" }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Device Info Block -->
-                <div class="device-details-box">
-                    <div class="device-grid">
-                        <div class="device-detail-item">
-                            <span class="device-lbl">Box Number</span>
-                            <span class="device-val" style="color: var(--text-primary);">{{ vehicle.box_number|default:"—" }}</span>
-                        </div>
-                        <div class="device-detail-item">
-                            <span class="device-lbl">Vehicle Number</span>
-                            <span class="device-val" style="color: var(--text-primary);">{{ vehicle.vehicle_number|default:"—" }}</span>
-                        </div>
-                        <div class="device-detail-item">
-                            <span class="device-lbl">Controller Model</span>
-                            <span class="device-val" style="color: var(--text-primary);">{{ vehicle.device_name|default:"—" }}</span>
-                        </div>
-                        <div class="device-detail-item">
-                            <span class="device-lbl">Controller IP</span>
-                            <span class="device-val" style="color: var(--primary);">{{ vehicle.device_ip|default:"—" }}</span>
-                        </div>
-                    </div>
-                    {% if vehicle.other_info %}
-                    <div style="margin-top: 0.4rem; font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
-                        <span class="device-lbl">Specs</span>
-                        <p style="color: var(--text-secondary); line-height: 1.3;">{{ vehicle.other_info|truncatechars:80 }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Camera Details -->
-                <div class="cameras-section">
-                    <div class="cameras-title">
-                        <i data-lucide="video" style="width: 12px; height: 12px;"></i>
-                        Cameras ({{ vehicle.cameras.count }})
-                    </div>
-                    
-                    {% if vehicle.cameras.all %}
-                        <div class="cameras-list">
-                            {% for camera in vehicle.cameras.all %}
-                            <div class="camera-row">
-                                <span class="camera-name">{{ camera.name }}</span>
-                                <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                                    <span class="camera-ip">
-                                        <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background-color: var(--accent-green);"></span>
-                                        {{ camera.ip_address }}{% if camera.port != 80 %}:{{ camera.port }}{% endif %}
-                                    </span>
-                                    {% if camera.rtsp_url %}
-                                    <span class="camera-rtsp" title="{{ camera.rtsp_url }}">{{ camera.rtsp_url }}</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p style="color: var(--text-muted); font-size: 0.75rem; font-style: italic;">No cameras configured.</p>
-                    {% endif %}
-                </div>
+    <!-- Active Device Failure Logs Table View -->
+    <div class="site-stat-box" style="flex: 1 1 300px; min-width: 0; max-width: 100%; min-height: 140px; justify-content: flex-start; padding: 0.85rem 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.35rem;">
+            <div class="site-stat-label" style="display: flex; align-items: center; gap: 0.25rem;">
+                <i data-lucide="alert-triangle" style="width: 14px; height: 14px; color: var(--accent-orange);"></i>
+                Active Device Failure Logs
             </div>
-
-            <!-- Vehicle actions -->
-            <div class="vehicle-actions">
-                <a href="{% url 'edit_vehicle' vehicle.id %}" class="btn btn-secondary" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;">
-                    <i data-lucide="edit" style="width: 12px; height: 12px;"></i>
-                    Edit
-                </a>
-                <form action="{% url 'delete_vehicle' vehicle.id %}" method="post" onsubmit="return confirm('Are you sure you want to delete vehicle \'{{ vehicle.name }}\'?');" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;">
-                        <i data-lucide="trash" style="width: 12px; height: 12px;"></i>
-                        Delete
-                    </button>
-                </form>
-            </div>
+            <span class="badge badge-orange" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">
+                {{ active_issues.count }} Active
+            </span>
         </div>
-        {% endfor %}
+        
+        {% if active_issues %}
+            <div style="overflow-x: auto; width: 100%;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <th style="padding: 0.25rem; font-weight: 600; color: var(--text-primary);">Vehicle</th>
+                            <th style="padding: 0.25rem; font-weight: 600; color: var(--text-primary);">Failure Details</th>
+                            <th style="padding: 0.25rem; font-weight: 600; color: var(--text-primary); text-align: right;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for issue in active_issues|slice:":3" %}
+                            <tr style="border-bottom: 1px solid rgba(15,23,42,0.03);">
+                                <td style="padding: 0.35rem 0.25rem; font-weight: 700; color: var(--text-primary);">
+                                    <a href="{% url 'vehicle_detail' issue.vehicle.id %}" style="text-decoration: none; color: inherit;">
+                                        {{ issue.vehicle.name }}
+                                    </a>
+                                </td>
+                                <td style="padding: 0.35rem 0.25rem; color: var(--text-secondary); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    {{ issue.problem_details }}
+                                </td>
+                                <td style="padding: 0.35rem 0.25rem; text-align: right;">
+                                    <span class="badge badge-status-{{ issue.permanent_solution_status }}" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">
+                                        {{ issue.get_permanent_solution_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        {% if active_issues.count > 3 %}
+                            <tr>
+                                <td colspan="3" style="padding-top: 0.35rem; text-align: center;">
+                                    <a href="{% url 'device_issues' %}" style="font-size: 0.7rem; font-weight: 600; color: var(--primary); text-decoration: none;">
+                                        View all {{ active_issues.count }} active issues &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; color: var(--text-muted); font-size: 0.75rem; text-align: center; padding: 2rem 0; width: 100%;">
+                <i data-lucide="check-circle" style="width: 1.5rem; height: 1.5rem; color: var(--accent-green); margin-bottom: 0.25rem;"></i>
+                No active device issues logged for this terminal site.
+            </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="glass-panel text-center" style="padding: 3rem 1.5rem;">
-        <i data-lucide="truck" style="width: 2rem; height: 2rem; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
-        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem;">No vehicles deployed</h3>
-        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">Start registering vehicle hardware telemetry and cameras at this location.</p>
-        <a href="{% url 'add_vehicle' site.id %}" class="btn btn-primary">Add First Vehicle</a>
-    </div>
-    {% endif %}
 </div>
+
+<!-- Allocated Personnel -->
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <h2 class="section-title" style="border-left: 3px solid var(--accent-green); padding-left: 0.5rem; font-size: 1.1rem; font-weight: 600; margin-bottom: 0;">
+            Allocated Personnel
+        </h2>
+        
+        <!-- Check-in user dropdown form -->
+        <form action="{% url 'add_site_person' site.id %}" method="post" style="margin: 0; display: flex; gap: 0.5rem; align-items: center;">
+            {% csrf_token %}
+            <select name="user_id" class="form-control" style="font-size: 0.8rem; padding: 0.2rem 1.75rem 0.2rem 0.5rem; height: 32px; width: auto; min-width: 180px;" required>
+                <option value="" disabled selected>-- Select Person --</option>
+                {% for u in available_users %}
+                    <option value="{{ u.id }}">{{ u.username }} ({{ u.profile.get_role_display }})</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary" style="padding: 0 0.75rem; font-size: 0.8rem; height: 32px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                <i data-lucide="plus" style="width: 14px; height: 14px;"></i> Add
+            </button>
+        </form>
+    </div>
+    
+    <div class="glass-panel" style="padding: 1.25rem;">
+        {% if present_personnel %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem;">
+                {% for person in present_personnel %}
+                    <div style="background-color: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="background-color: rgba(16, 185, 129, 0.1); color: var(--accent-green); border-radius: 50%; width: 2.25rem; height: 2.25rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i data-lucide="user-check" style="width: 1.2rem; height: 1.2rem;"></i>
+                        </div>
+                        <div style="overflow: hidden; flex-grow: 1;">
+                            <h4 style="font-size: 0.88rem; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ person.username }}
+                            </h4>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ person.profile.get_role_display }}
+                            </p>
+                        </div>
+                        <div style="flex-shrink: 0; display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="badge badge-green" style="font-size: 0.65rem; padding: 0.15rem 0.35rem;">On Site</span>
+                            <form action="{% url 'remove_site_person' site.id person.id %}" method="post" style="margin: 0; display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" title="Remove from Site" style="background: none; border: none; color: var(--accent-red); cursor: pointer; padding: 0.25rem; display: flex; align-items: center; justify-content: center; transition: var(--transition); border-radius: 4px;" onmouseover="this.style.backgroundColor='rgba(239, 68, 68, 0.08)'" onmouseout="this.style.backgroundColor='transparent'">
+                                    <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 1.5rem 1rem; color: var(--text-secondary); font-size: 0.85rem; font-style: italic;">
+                <i data-lucide="user-x" style="width: 1.5rem; height: 1.5rem; color: var(--text-muted); margin-bottom: 0.25rem; display: block; margin: 0 auto 0.25rem;"></i>
+                No personnel currently present on site. Use the dropdown above to check-in someone.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+
 
 <!-- Modal Form for Editing Site -->
 <div class="modal-overlay" id="edit-site-modal-overlay">
@@ -598,5 +635,20 @@
             modalOverlay.classList.remove('active');
         }
     });
+
+    // Expand/Collapse Vehicle details
+    function toggleDetails(vehicleId) {
+        const drawer = document.getElementById('details-' + vehicleId);
+        const btn = document.getElementById('btn-details-' + vehicleId);
+        if (drawer.style.display === 'none') {
+            drawer.style.display = 'block';
+            btn.innerHTML = '<i data-lucide="eye-off" style="width: 12px; height: 12px;"></i> Hide Details';
+        } else {
+            drawer.style.display = 'none';
+            btn.innerHTML = '<i data-lucide="eye" style="width: 12px; height: 12px;"></i> View Details';
+        }
+        // Re-render Lucide icons inside the button
+        lucide.createIcons();
+    }
 </script>
 {% endblock %}
